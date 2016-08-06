@@ -1,66 +1,71 @@
-from flask import Flask
+from flask import Flask,  render_template, redirect
 app = Flask(__name__)
 
+#Changing a category to a subject.
 categories = [{'name': 'math', 'id': 1},
               {'name': 'icelandic', 'id': 2},
               {'name': 'english', 'id': 3},
-              {'name': 'danish', 'id': 4}]
+              {'name': 'danish', 'id': 4},
+              {'name': 'spanish', 'id': 5},
+              {'name': 'biology', 'id': 6},
+              {'name': 'physics', 'id': 7},
+              ]
+items = [{'title': 'Calculus 3000', 'description': 'I have Calculus 3000 for sale. Please contact me in 848-0112.', 'category': 'math', 'id':  1},
+         {'title': 'Spanish 103', 'description': 'I have Spanish 103 for sale.', 'category': 'spanish', 'id': 2},
+         {'title': 'Danish 103', 'description': 'I have Danish 103 for sale.', 'category': 'danish', 'id': 3},
+         {'title': 'English 103', 'description': 'I have English 103 for sale.', 'category': 'english', 'id': 4},
+         {'title': 'Biology 103', 'description': 'I have Biology 103 for sale.', 'category': 'biology', 'id': 5},      
+         {'title': 'Physics 103', 'description': 'I have Physics 103 for sale.', 'category': 'physics', 'id': 6},
+         {'title': 'a', 'description': 'I have Physics 103 for sale.', 'category': 'physics', 'id': 7}
+       ]
 category = categories[0]
-
+item = items[0]
 @app.route('/')
 @app.route('/catalog')
 def showCatalog():
-    str = "<ul>"
-    str += "<li>Navigation bar on top.</li>"
-    str += "<li>Main page. Categories to the left and items to the right.</li>"
-    str += "<li>Login/logout button. Add item button if user logged in.</li>"
-    str += "</ul>"
-    return str
+    filterCategory = 'none'
+    return render_template('catalog.html', categories=categories,items=items, filterCategory = filterCategory)
 
 @app.route('/catalog/<category>/items')
 def showSelectedCategory(category):
-    str = "<ul>"
-    str += "<li>Navigation bar on top.</li>"
-    str += "<li>Main page. Categories to the left.</li>"
-    str += "<li>Main page. Items in category %s to the right.</li>" % category 
-    str += "<li>Login/logout button. Add item button if user logged in.</li>"
-    str += "</ul>"
-    return str
+    print category
+    filterCategory = category
+    items2 = []
+    for item in items:
+        if item['category'] == category:
+           items2.append(item)
+    return render_template('catalog.html', categories=categories,items=items2, filterCategory = filterCategory, n = len(items2))
+
+@app.route('/catalog/<categoryName>/<itemTitle>')
+def showItemFromCategory(itemTitle,categoryName):
+    itemSelected = None
+    for item in items:
+        if itemTitle == item['title'] and categoryName == item['category']:
+           itemSelected = item
+           return render_template('item.html', item=itemSelected)
+
+    return redirect('/catalog')
 
 
-@app.route('/catalog/<category>/<item>')
-def showItemFromCategory(category,item):
-    str = "<ul>"
-    str += "<li>Navigation bar on top.</li>"
-    str += "<li>%s name from category %s</li>" % (item,category)
-    str += "<li>%s description from category %s</li>" % (item,category)
-    str += "<li>Edit and delete button</li>"
-    str += "</ul>"
-    return str
+@app.route('/catalog/<itemTitle>/edit')
+def editItem(itemTitle):
+    itemSelected = None
+    for item in items:
+        if itemTitle == item['title']:
+           itemSelected = item
+           return render_template('edit.html', item=itemSelected,categories=categories)
 
-@app.route('/catalog/<item>/edit')
-def editItem(item):
-    str = "<ul>"
-    str += "<li>Navigation bar on top.</li>"
-    str += "<li>Edit form</li>"
-    str += "<li>%s name </li>" % item
-    str += "<li>%s description</li>" % item
-    str += "<li>%s category</li>" % item
-    str += "</ul>"
-    return str
-
-@app.route('/catalog/<item>/delete')
-def deleteItem(item):
-    str = "<ul>"
-    str += "<li>Navigation bar on top.</li>"
-    str += "<li>Are you sure?</li>"
-    str += "<li>submit button</li>" 
-    str += "</ul>"
-    return str
-
-@app.route('/<name>.json')
-def jsonItem(name):
-    return "%s.json" % name
+@app.route('/catalog/<itemTitle>/delete')
+def deleteItem(itemTitle):
+    itemSelected = None
+    for item in items:
+        if itemTitle == item['title']:
+           itemSelected = item
+           return render_template('delete.html')
+        
+@app.route('/catalog.json')
+def jsonItem():
+    return str(categories)
 
 @app.route('/login')
 def showLogin():

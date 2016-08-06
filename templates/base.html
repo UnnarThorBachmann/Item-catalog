@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" charset="utf-8">
+  <title>Item Catalog</title>
+  <!-- Bootstrap 3 -->
+  <link href='https://fonts.googleapis.com/css?family=Titillium+Web:400,200,200italic,300,300italic,400italic,600,600italic,700,700italic,900|Fjalla+One' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap-theme.min.css">
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+  <script src="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+
+  
+  <style type="text/css" media="screen">
+    body {
+            background-color: lightgray;
+            color: #333d51;
+            margin: 0%;
+            padding: 0%;
+            margin: 0%;
+            font-family: 'Fjalla One', sans-serif;
+            font-size: 16px;
+        }
+        h3 {
+          line-height: 200%;
+        }
+        h3,
+        h4,
+        h5,
+        h6,
+        {
+          color: #f4f3ea;
+        }
+       h1 {
+        color: white;
+       }
+       h2,p,label {
+        color: black;
+       }
+       .header-left {
+       	display: inline-block; 
+       	width: 30%px;
+       	padding-left:5%;
+       }
+       .header-right {
+         display: inline-block; 
+         width: 70%;
+         padding-left: 60%;
+       }
+       .navbar-header {
+         width: 100%;
+         background-color: black;
+       }
+       
+       .btn-default {
+         color: white;
+         background-color: red;
+         background-image: none;
+         border-color: red;
+       }
+       .panel {
+        margin-left: 10%;
+        margin-right: 10%;
+       }
+       .categories {
+        display: inline-block;
+        width: 40%;
+       }
+       .items {
+        display: inline-block;
+        width: 50%;
+        padding-left: 10%;
+       }
+       .jumbotron {
+        margin-left: 10%;
+        margin-right: 10%;
+        background-color: white;
+       }
+       .links {
+        color: red;
+       }
+       @media screen and (max-width: 500px) {
+
+      }
+    </style>
+</head>
+  <body>
+  <nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <div class="header-left">
+        <h1>Catalog App</h1>
+      </div>
+      <div class="header-right">
+        <button type="button" class="btn btn-default navbar-btn">Log in</button>
+      </div>
+    </div>
+
+  </div>
+  </nav>
+
+  {% block content %}
+
+  {%endblock%} 
+  </body>
+</html>
