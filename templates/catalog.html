@@ -14,16 +14,16 @@
         <div class="items">
           
           <ul class="list-group">
-            {%if filterCategory == 'none'%}
+            {%if filterCategoryName == 'none'%}
               <h2>Latest items</h2>
               <button type="button" class="btn btn-default navbar-btn">Add item</button>
               {%for item in items%}
-               <li class="list-group-item"><a>{{item.title}} <span>({{item.category}})</span></a></li>
+               <li class="list-group-item"><a>{{item.name}} <span>({{item.category.name}})</span></a></li>
               {%endfor%}
             {%else%}
-              <h2>{{filterCategory}} items ({{n}})</h2>
+              <h2>{{filterCategoryName}} items ({{n}})</h2>
               {%for item in items%}
-               <li class="list-group-item"><a>{{item.title}}</a></li>
+               <li class="list-group-item"><a>{{item.name}}</a></li>
               {%endfor%}
             {%endif%}
             

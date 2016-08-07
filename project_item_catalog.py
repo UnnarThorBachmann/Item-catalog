@@ -1,59 +1,60 @@
-from flask import Flask,  render_template, redirect
+from flask import Flask,  render_template, redirect, url_for
 app = Flask(__name__)
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-#Changing a category to a subject.
-categories = [{'name': 'math', 'id': 1},
-              {'name': 'icelandic', 'id': 2},
-              {'name': 'english', 'id': 3},
-              {'name': 'danish', 'id': 4},
-              {'name': 'spanish', 'id': 5},
-              {'name': 'biology', 'id': 6},
-              {'name': 'physics', 'id': 7},
-              ]
-items = [{'title': 'Calculus 3000', 'description': 'I have Calculus 3000 for sale. Please contact me in 848-0112.', 'category': 'math', 'id':  1},
-         {'title': 'Spanish 103', 'description': 'I have Spanish 103 for sale.', 'category': 'spanish', 'id': 2},
-         {'title': 'Danish 103', 'description': 'I have Danish 103 for sale.', 'category': 'danish', 'id': 3},
-         {'title': 'English 103', 'description': 'I have English 103 for sale.', 'category': 'english', 'id': 4},
-         {'title': 'Biology 103', 'description': 'I have Biology 103 for sale.', 'category': 'biology', 'id': 5},      
-         {'title': 'Physics 103', 'description': 'I have Physics 103 for sale.', 'category': 'physics', 'id': 6},
-         {'title': 'a', 'description': 'I have Physics 103 for sale.', 'category': 'physics', 'id': 7}
-       ]
-category = categories[0]
-item = items[0]
+from database_setup import Category, Base, Item, User
+
+engine = create_engine('sqlite:///catalog.db')
+# Bind the engine to the metadata of the Base class so that the
+# declaratives can be accessed through a DBSession instance
+Base.metadata.bind = engine
+
+DBSession = sessionmaker(bind=engine)
+# A DBSession() instance establishes all conversations with the database
+# and represents a "staging zone" for all the objects loaded into the
+# database session object. Any change made against the objects in the
+# session won't be persisted into the database until you call
+# session.commit(). If you're not happy about the changes, you can
+# revert all of them back to the last commit by calling
+# session.rollback()
+session = DBSession()
+
 @app.route('/')
 @app.route('/catalog')
 def showCatalog():
     filterCategory = 'none'
-    return render_template('catalog.html', categories=categories,items=items, filterCategory = filterCategory)
+    categories = session.query(Category).all()
+    items = session.query(Item).all()
+    return render_template('catalog.html', categories=categories,items=items, filterCategoryName = filterCategoryName)
 
-@app.route('/catalog/<category>/items')
-def showSelectedCategory(category):
-    print category
-    filterCategory = category
-    items2 = []
-    for item in items:
-        if item['category'] == category:
-           items2.append(item)
-    return render_template('catalog.html', categories=categories,items=items2, filterCategory = filterCategory, n = len(items2))
+@app.route('/catalog/<categoryName>/items')
+def showSelectedCategory(categoryName):
+    filterCategory = session.query(Category).filter_by(name=categoryName).one()
+    items = session.query(Item).filter_by(category=filterCategory).all()
+    categories = session.query(Category)
+    return render_template('catalog.html', categories=categories,items=items, filterCategoryName = categoryName, n = len(items))
 
-@app.route('/catalog/<categoryName>/<itemTitle>')
-def showItemFromCategory(itemTitle,categoryName):
-    itemSelected = None
-    for item in items:
-        if itemTitle == item['title'] and categoryName == item['category']:
-           itemSelected = item
-           return render_template('item.html', item=itemSelected)
+@app.route('/catalog/<categoryName>/<itemName>')
+def showItemFromCategory(itemName,categoryName):
+    filterItem = session.query(Item).filter_by(name=itemName).first()
+    if filterItem is not None and filterItem.category == categoryName:
+       return render_template('item.html', item=filterItem)
+    else:
+        return 'File not found, 404'
+ 
 
-    return redirect('/catalog')
-
-
-@app.route('/catalog/<itemTitle>/edit')
+@app.route('/catalog/<itemName>/edit',methods = ['POST','GET'])
 def editItem(itemTitle):
-    itemSelected = None
-    for item in items:
-        if itemTitle == item['title']:
-           itemSelected = item
-           return render_template('edit.html', item=itemSelected,categories=categories)
+    if request.method == 'GET':
+       filterItem = session.query(Item).filter_by(name=itemName).first()
+       if filterItem is not None:
+          categories = session.query(Category)
+          return render_template('edit.html', item=itemSelected,categories=categories)
+       else:
+           return 'File not found, 404'
+    
+        
 
 @app.route('/catalog/<itemTitle>/delete')
 def deleteItem(itemTitle):
@@ -69,7 +70,7 @@ def jsonItem():
 
 @app.route('/login')
 def showLogin():
-    return "Display login"
+    return render_template('login.html')
 
 if __name__ == '__main__':
    app.debug = True
