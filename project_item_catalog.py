@@ -23,7 +23,7 @@ session = DBSession()
 @app.route('/')
 @app.route('/catalog')
 def showCatalog():
-    filterCategory = 'none'
+    filterCategoryName = 'none'
     categories = session.query(Category).all()
     items = session.query(Item).all()
     return render_template('catalog.html', categories=categories,items=items, filterCategoryName = filterCategoryName)
@@ -38,31 +38,32 @@ def showSelectedCategory(categoryName):
 @app.route('/catalog/<categoryName>/<itemName>')
 def showItemFromCategory(itemName,categoryName):
     filterItem = session.query(Item).filter_by(name=itemName).first()
-    if filterItem is not None and filterItem.category == categoryName:
+    
+    if filterItem is not None and filterItem.category.name == categoryName:
        return render_template('item.html', item=filterItem)
     else:
         return 'File not found, 404'
  
 
-@app.route('/catalog/<itemName>/edit',methods = ['POST','GET'])
-def editItem(itemTitle):
-    if request.method == 'GET':
-       filterItem = session.query(Item).filter_by(name=itemName).first()
-       if filterItem is not None:
-          categories = session.query(Category)
-          return render_template('edit.html', item=itemSelected,categories=categories)
-       else:
-           return 'File not found, 404'
+@app.route('/catalog/<itemName>/edit', methods = ['POST','GET'])
+def editItem(itemName):
+   categories = session.query(Category).all()
+   filterItem = session.query(Item).filter_by(name=itemName).first()
+   if filterItem is not None:
+      categories = session.query(Category)
+      return render_template('edit.html', item=filterItem,categories=categories)
+   else:
+       return 'File not found, 404'
     
-        
+@app.route('/catalog/new', methods = ['POST','GET'])
+def newItem():
+   categories = session.query(Category).all()
+   return render_template('newItem.html',categories = categories)
+   
 
-@app.route('/catalog/<itemTitle>/delete')
-def deleteItem(itemTitle):
-    itemSelected = None
-    for item in items:
-        if itemTitle == item['title']:
-           itemSelected = item
-           return render_template('delete.html')
+@app.route('/catalog/<itemName>/delete', methods = ['POST','GET'])
+def deleteItem(itemName):
+    return render_template('delete.html')
         
 @app.route('/catalog.json')
 def jsonItem():
