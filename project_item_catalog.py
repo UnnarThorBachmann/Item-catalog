@@ -1,9 +1,11 @@
-from flask import Flask,  render_template, redirect, url_for
-app = Flask(__name__)
+from flask import Flask,  render_template, redirect, url_for, make_response
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
 from database_setup import Category, Base, Item, User
+import json
+
+app = Flask(__name__)
+
 
 engine = create_engine('sqlite:///catalog.db')
 # Bind the engine to the metadata of the Base class so that the
@@ -42,7 +44,9 @@ def showItemFromCategory(itemName,categoryName):
     if filterItem is not None and filterItem.category.name == categoryName:
        return render_template('item.html', item=filterItem)
     else:
-        return 'File not found, 404'
+        response = make_response(json.dumps("File not found"), 404)
+        response.headers['Content-Type'] = 'application/json'
+        return response
  
 
 @app.route('/catalog/<itemName>/edit', methods = ['POST','GET'])
@@ -53,7 +57,9 @@ def editItem(itemName):
       categories = session.query(Category)
       return render_template('edit.html', item=filterItem,categories=categories)
    else:
-       return 'File not found, 404'
+       response = make_response(json.dumps("File not found"), 404)
+       response.headers['Content-Type'] = 'application/json'
+       return response
     
 @app.route('/catalog/new', methods = ['POST','GET'])
 def newItem():
