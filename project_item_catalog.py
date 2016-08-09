@@ -1,4 +1,4 @@
-from flask import Flask,  render_template, redirect, url_for, make_response
+from flask import Flask, request,  render_template, redirect, url_for, make_response
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from database_setup import Category, Base, Item, User
@@ -23,12 +23,15 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 @app.route('/')
-@app.route('/catalog')
+@app.route('/catalog', methods = ['POST','GET'])
 def showCatalog():
-    filterCategoryName = 'none'
-    categories = session.query(Category).all()
-    items = session.query(Item).all()
-    return render_template('catalog.html', categories=categories,items=items, filterCategoryName = filterCategoryName)
+    if request.method == 'POST':
+       print 'prump'
+    else:
+        filterCategoryName = 'none'
+        categories = session.query(Category).all()
+        items = session.query(Item).all()
+        return render_template('catalog.html', categories=categories,items=items, filterCategoryName = filterCategoryName)
 
 @app.route('/catalog/<categoryName>/items')
 def showSelectedCategory(categoryName):
@@ -76,8 +79,12 @@ def jsonItem():
     return str(categories)
 
 @app.route('/login')
-def showLogin():
+def showLogIn():
     return render_template('login.html')
+
+@app.route('/signup')
+def showSignUp():
+    return render_template('signup.html')
 
 if __name__ == '__main__':
    app.debug = True

@@ -9,8 +9,8 @@
   <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap-theme.min.css">
   <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
   <script src="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
+<script src="//apis.google.com/js/platform.js?onload=start"> </script>
 
-  
   <style type="text/css" media="screen">
     body {
             background-color: lightgray;
@@ -37,10 +37,20 @@
        h2,p,label {
         color: black;
        }
+       button {
+        margin-right: 8px;
+        margin-left:8px;
+       }
+       a.hvitur {
+        color: white;
+       }
        .header-left {
        	display: inline-block; 
-       	width: 30%px;
+       	width: 20%;
        	padding-left:5%;
+       }
+       .btn-navbar {
+        border: 5%;
        }
        .header-right {
          display: inline-block; 
@@ -51,7 +61,10 @@
          width: 100%;
          background-color: black;
        }
-       
+       .navbar-default {
+        background-image: none;
+        background-color: black;
+       }
        .btn-default {
          color: white;
          background-color: red;
@@ -87,20 +100,49 @@
   <body>
   <nav class="navbar navbar-default">
   <div class="container-fluid">
-    <div class="navbar-header">
-      <div class="header-left">
-        <h1>Catalog App</h1>
-      </div>
-      <div class="header-right">
-        <button type="button" class="btn btn-default navbar-btn">Log in</button>
-      </div>
+    <div class="header-left">
+        <h1><a href = "/">Catalog App</a></h1>
     </div>
-
+    <form class="navbar-form navbar-right">
+      <button type="button" class="btn btn-default navbar-btn" id="login">Log in
+      </button>
+      <button type="button" class="btn btn-default navbar-btn" id="signup">Sign up
+      </button>
+      <div class="form-group btn navbar-btn" id="signInButton">
+          <span class="g-signin"
+            data-scope="openid email"
+            data-clientid="1096881345694-1nkmeiv375nud6l7j5g5726mqs3g3jov.apps.googleusercontent.com"
+            data-redirecturi="postmessage"
+            data-accesstype="offline"
+            data-cookiepolicy="single_host_origin"
+            data-callback="signInCallback"
+            data-approvalprompt="force">
+          </span>
+      </div>
+      <button type="button" class="btn btn-primary navbar-btn">
+        <fb:login-button scope="public_profile,email" onlogin="sendTokenToServer();">
+        <a class="hvitur" href='javascript:sendTokenToServer()'>Login with Facebook</a>
+      </fb:login-button>
+      <button type="button" class="btn btn-default navbar-btn">Log out
+      </button>
+    </form>
+    
   </div>
   </nav>
 
   {% block content %}
 
   {%endblock%} 
+
   </body>
+  <script  type="text/javascript">
+   var buttonLogIn = document.getElementById('login');
+    buttonLogIn.addEventListener('click',function() {
+      location.href = '/login'
+    });
+    var buttonSignUp = document.getElementById('signup');
+    buttonSignUp.addEventListener('click',function() {
+      location.href = '/signup'
+    });
+  </script>
 </html>

@@ -21,6 +21,7 @@
               {%endfor%}
             {%else%}
               <h2>{{filterCategoryName}} items ({{n}})</h2>
+              <button type="button" class="btn btn-default navbar-btn">Add item</button>
               {%for item in items%}
                <li class="list-group-item"><a href="{{url_for('showItemFromCategory',itemName=item.name,categoryName=item.category.name)}}">{{item.name}}</a></li>
               {%endfor%}
