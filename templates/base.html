@@ -44,18 +44,21 @@
        a.hvitur {
         color: white;
        }
+       .error {
+        color: red;
+       }
        .header-left {
        	display: inline-block; 
-       	width: 20%;
-       	padding-left:5%;
+       	width: 40%;
+       	padding-left: 5%;
+        margin-bottom: 50px;
        }
        .btn-navbar {
         border: 5%;
        }
        .header-right {
          display: inline-block; 
-         width: 70%;
-         padding-left: 60%;
+         width: 50%;
        }
        .navbar-header {
          width: 100%;
@@ -70,10 +73,6 @@
          background-color: red;
          background-image: none;
          border-color: red;
-       }
-       .panel {
-        margin-left: 10%;
-        margin-right: 10%;
        }
        .categories {
         display: inline-block;
@@ -92,6 +91,9 @@
        .links {
         color: red;
        }
+       .btn-group-vertical {
+        width: 60%;
+       }
        @media screen and (max-width: 500px) {
 
       }
@@ -106,23 +108,6 @@
     <form class="navbar-form navbar-right">
       <button type="button" class="btn btn-default navbar-btn" id="login">Log in
       </button>
-      <button type="button" class="btn btn-default navbar-btn" id="signup">Sign up
-      </button>
-      <div class="form-group btn navbar-btn" id="signInButton">
-          <span class="g-signin"
-            data-scope="openid email"
-            data-clientid="1096881345694-1nkmeiv375nud6l7j5g5726mqs3g3jov.apps.googleusercontent.com"
-            data-redirecturi="postmessage"
-            data-accesstype="offline"
-            data-cookiepolicy="single_host_origin"
-            data-callback="signInCallback"
-            data-approvalprompt="force">
-          </span>
-      </div>
-      <button type="button" class="btn btn-primary navbar-btn">
-        <fb:login-button scope="public_profile,email" onlogin="sendTokenToServer();">
-        <a class="hvitur" href='javascript:sendTokenToServer()'>Login with Facebook</a>
-      </fb:login-button>
       <button type="button" class="btn btn-default navbar-btn">Log out
       </button>
     </form>
@@ -139,10 +124,6 @@
    var buttonLogIn = document.getElementById('login');
     buttonLogIn.addEventListener('click',function() {
       location.href = '/login'
-    });
-    var buttonSignUp = document.getElementById('signup');
-    buttonSignUp.addEventListener('click',function() {
-      location.href = '/signup'
     });
   </script>
 </html>
