@@ -128,13 +128,20 @@
 
   </body>
   <script  type="text/javascript">
-   var buttonLogIn = document.getElementById('login');
-    buttonLogIn.addEventListener('click',function() {
-      location.href = '/login'
+   var logInButton = document.getElementById('login');
+    logInButton.addEventListener('click',function() {
+      location.href = "{{url_for('showLogIn')}}";
     });
-  var buttonLogOut = document.getElementById('logout');
-    buttonLogOut.addEventListener('click',function() {
-      location.href = '/logout'
+    var logOutButton = document.getElementById('logout');
+    logOutButton.addEventListener('click',function() {
+      location.href = "{{url_for('logOut')}}";
     });
+    var addButton = document.getElementById('addButton');
+    if (addButton != null) {
+      addButton.addEventListener('click',function() {
+      location.href = "{{url_for('newItem')}}";
+      });
+    }
+    
   </script>
 </html>

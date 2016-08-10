@@ -2,18 +2,18 @@
 {%block content%}
 <div class="jumbotron">
   <h1>Edit</h1>
-  <form>
+  <form action="{{url_for('editItem',itemName=item.name)}}" method="post">
     <div class="form-group">
-    <label for="title">Name:</label>
-    <input type="text" class="form-control" id="title" placeholder="{{item.name}}">
+    <label for="name">Name:</label>
+    <input type="text" class="form-control" name="name" value="{{item.name}}">
     </div>
     <div class="form-group">
       <label class="medium" for="description">Description:</label>
-      <textarea type="text" class="form-control" id="description" placeholder="{{item.description}}"></textarea>
+      <textarea type="text" class="form-control" name="description">{{item.description}}</textarea>
     </div>
     <div class="form-group">
       <label for="category">Category:</label>
-        <select class="form-control" id="category">
+        <select class="form-control" name="category">
            {%for category in categories%}
              {%if category.name == item.category.name%}
              <option value="{{category.name}}" selected>{{category.name}}</option>

@@ -23,13 +23,12 @@
           <ul class="list-group">
             {%if filterCategoryName == 'none'%}
               <h2>Latest items</h2>
-              <button type="button" class="{{addButtonHide}} btn btn-default navbar-btn">Add item</button>
+              <button type="button" class="{{addButtonHide}} btn btn-default navbar-btn" id='addButton'>Add item</button>
               {%for item in items%}
                <li class="list-group-item"><a href="{{url_for('showItemFromCategory',itemName=item.name,categoryName=item.category.name)}}">{{item.name}} <span>({{item.category.name}})</span></a></li>
               {%endfor%}
             {%else%}
               <h2>{{filterCategoryName}} items ({{n}})</h2>
-              <button type="button" class="btn btn-default navbar-btn">Add item</button>
               {%for item in items%}
                <li class="list-group-item"><a href="{{url_for('showItemFromCategory',itemName=item.name,categoryName=item.category.name)}}">{{item.name}}</a></li>
               {%endfor%}

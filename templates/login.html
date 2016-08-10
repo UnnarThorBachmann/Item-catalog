@@ -47,7 +47,7 @@
       <div class="panel-body">
         <h2>Sign up</h2>
         {% with messages = get_flashed_messages(category_filter=["signup"]) %}
-          <form action="{{url_for('showSignUp')}}" method="post">
+          <form action="{{url_for('signUp')}}" method="post">
             <div class="form-group">
               <label for="nameSignUp">Username</label>
               <input class="form-control" name="nameSignUp" value = "{{messages[0]}}">

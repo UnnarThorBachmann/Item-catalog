@@ -3,6 +3,6 @@
 <div class="jumbotron">
   <h1>{{item.name}}</h1>
   <p>{{item.description}}</p>
-  <p><a class="links" href="{{url_for('editItem',itemName=item.name)}}" role="button">Edit</a> | <a class="links" href="{{url_for('deleteItem',itemName=item.name)}}" role="button">Delete</a></p>
+  <p class="{{editDeleteHide}}"><a class="links" href="{{url_for('editItem',itemName=item.name)}}" role="button">Edit</a> | <a class="links" href="{{url_for('deleteItem',itemName=item.name)}}" role="button">Delete</a></p>
 </div>
 {%endblock%}

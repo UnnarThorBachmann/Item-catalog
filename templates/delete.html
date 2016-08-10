@@ -4,7 +4,7 @@
   <h1>Delete Item</h1>
   <p>Are you sure you want to delete item?</p>
 
-  <form>
+  <form action="{{url_for('deleteItem',itemName=itemName)}}" method="post">
     <div class="form-group">
       <button type="submit" class="btn btn-default">Submit</button>
     </div>
