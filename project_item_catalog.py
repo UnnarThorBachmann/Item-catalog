@@ -19,14 +19,25 @@ session = DBSession()
 
 @app.route('/')
 @app.route('/catalog')
-def showCatalog(user=None):
+def showCatalog():
     filterCategoryName = 'none'
-    
+    if login_session.has_key('username'):
+       addButtonHide = ''
+       logoutButtonHide = ''
+       loginButtonHide = 'hidden'
+    else:
+        addButtonHide = 'hidden'
+        logoutButtonHide = 'hidden'
+        loginButtonHide = ''
+
     categories = session.query(Category).all()
-    #if user:  
-    #else:
     items = session.query(Item).all()
-    return render_template('catalog.html', categories=categories,items=items, filterCategoryName = filterCategoryName)
+    return render_template('catalog.html',
+                           categories=categories,items=items,
+                           filterCategoryName = filterCategoryName,
+                           addButtonHide= addButtonHide,
+                           logoutButtonHide=logoutButtonHide,
+                           loginButtonHide=loginButtonHide)
 
 @app.route('/catalog/<categoryName>/items')
 def showSelectedCategory(categoryName):
@@ -78,7 +89,12 @@ def showLogIn():
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
                     for x in xrange(32))
     login_session['state'] = state
-    response = make_response(render_template('login.html'))
+    loginButtonHide = 'hidden'
+    logoutButtonHide = 'hidden'
+    
+    response = make_response(render_template('login.html',
+                                             loginButtonHide=loginButtonHide,
+                                             logoutButtonHide=logoutButtonHide))
     response.set_cookie('state', state)
     return response
     
@@ -107,15 +123,15 @@ def loginUser():
         return redirect(url_for('showLogIn'))
     else:
         user = session.query(User).filter_by(name=username).first()
-        print user
-        #user = None
+        
         if user is None or user.password is None or not helper_functions.valid_pw(username,password, user.password):
            flash(username,'login')
            flash('Invalid login','login')
            return redirect(url_for('showLogIn'))
         else:
             login_session['username'] = username
-            login_session['email'] = email
+            login_session['email'] = user.email
+            flash('You are now logged in as %s' % username,'success')
             return redirect(url_for('showCatalog'))
 
 @app.route('/signup', methods = ['POST'])
@@ -163,7 +179,7 @@ def showSignUp():
         
     flash(email,'signup')
     
-    if (valid_usr is None or user is not None or valid_em is None or valid_pw is None or password !=verify):
+    if (valid_usr is None or user is not None or valid_em is None or valid_pw is None or password != verify):
         print 'prump'
         return redirect(url_for('showLogIn'))
     else:
@@ -175,12 +191,14 @@ def showSignUp():
         session.commit()
         login_session['username'] = username
         login_session['email'] = email
-        
+        flash('You have signed in as %s' % username,'success')
         return redirect(url_for('showCatalog'))
     
 @app.route('/logout', methods = ['GET'])
 def LogOut():
     login_session.clear()
+    flash('You have logged out','success')
+
     return redirect(url_for('showCatalog'))
 if __name__ == '__main__':
    app.debug = True

@@ -1,6 +1,14 @@
 {%extends "base.html"%}
 {%block content%}
-    <div class="panel panel-default">
+
+    <div class="main panel panel-default">
+      {% with messages = get_flashed_messages(category_filter=["success"]) %}
+     {%if messages%}
+     <div class="alert alert-success" role="alert">
+      {{messages[0]}}
+     </div>
+     {%endif%}
+     {%endwith%}
       <div class="panel-body">
         <div class = "categories">
           <h2>Categories</h2>
@@ -15,7 +23,7 @@
           <ul class="list-group">
             {%if filterCategoryName == 'none'%}
               <h2>Latest items</h2>
-              <button type="button" class="btn btn-default navbar-btn">Add item</button>
+              <button type="button" class="{{addButtonHide}} btn btn-default navbar-btn">Add item</button>
               {%for item in items%}
                <li class="list-group-item"><a href="{{url_for('showItemFromCategory',itemName=item.name,categoryName=item.category.name)}}">{{item.name}} <span>({{item.category.name}})</span></a></li>
               {%endfor%}

@@ -68,6 +68,13 @@
         background-image: none;
         background-color: black;
        }
+       .main {
+        margin-left: 10%;
+        margin-right: 10%;
+       }
+       .hidden {
+        display: none;
+       }
        .btn-default {
          color: white;
          background-color: red;
@@ -106,9 +113,9 @@
         <h1><a href = "/">Catalog App</a></h1>
     </div>
     <form class="navbar-form navbar-right">
-      <button type="button" class="btn btn-default navbar-btn" id="login">Log in
+      <button type="button" class="{{loginButtonHide}} btn btn-default navbar-btn" id="login">Log in
       </button>
-      <button type="button" class="btn btn-default navbar-btn" id="logout">Log out
+      <button type="button" class="{{logoutButtonHide}} btn btn-default navbar-btn" id="logout">Log out
       </button>
     </form>
     
