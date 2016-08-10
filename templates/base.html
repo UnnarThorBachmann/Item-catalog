@@ -108,7 +108,7 @@
     <form class="navbar-form navbar-right">
       <button type="button" class="btn btn-default navbar-btn" id="login">Log in
       </button>
-      <button type="button" class="btn btn-default navbar-btn">Log out
+      <button type="button" class="btn btn-default navbar-btn" id="logout">Log out
       </button>
     </form>
     
@@ -124,6 +124,10 @@
    var buttonLogIn = document.getElementById('login');
     buttonLogIn.addEventListener('click',function() {
       location.href = '/login'
+    });
+  var buttonLogOut = document.getElementById('logout');
+    buttonLogOut.addEventListener('click',function() {
+      location.href = '/logout'
     });
   </script>
 </html>

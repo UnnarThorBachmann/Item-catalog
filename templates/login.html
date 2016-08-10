@@ -13,12 +13,12 @@
     <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
       <div class="panel-body">
     <h2>Log in</h2>
-    <form action="{{url_for('showWelcome')}}" method = "post">
-    {% with messages = get_flashed_messages() %}
+    {% with messages = get_flashed_messages(category_filter=["login"]) %}
+    <form action="{{url_for('loginUser')}}" method = "post">
 
     <div class="form-group">
     <label for="logInName">Name:</label>
-    <input type="text" class="form-control" name="logInName" placeholder="{{messages[0]}}">
+    <input type="text" class="form-control" name="logInName" value="{{messages[0]}}">
     </div>
 
     <div class="form-group">
@@ -30,8 +30,8 @@
     <div class="form-group">
       <button type="submit" class="btn btn-default">Submit</button>
     </div>
-    {% endwith %}
-  </form>
+    </form>
+    {%endwith%}
       </div>
     </div>
   </div>
@@ -46,32 +46,35 @@
     <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
       <div class="panel-body">
         <h2>Sign up</h2>
+        {% with messages = get_flashed_messages(category_filter=["signup"]) %}
           <form action="{{url_for('showSignUp')}}" method="post">
-            {% with messages = get_flashed_messages() %}
             <div class="form-group">
               <label for="nameSignUp">Username</label>
-              <input class="form-control" name="nameSignUp">
+              <input class="form-control" name="nameSignUp" value = "{{messages[0]}}">
+              <div class="error">{{messages[1]}}</div>
             </div>
             <div class="form-group">
               <label for="passwordSignUp">Password</label>  
               <input class="form-control" type="password" name="passwordSignUp">
+              <div class="error">{{messages[2]}}</div>
             </div>
             <div class="form-group">
                <label for="verifySignUp">Verify password</label>
                <input class="form-control" type="password" name="verifySignUp">
-               <div>{{error_verify}}</div>
+               <div class="error">{{messages[3]}}</div>
             </div>
             <div class="form-group">
               <label for="emailSignUp"> email</label>
-              <input class="form-control" name="emailSignUp">
-              <div class="error">{{error_email}}</div>
+              <input class="form-control" name="emailSignUp" value="{{messages[5]}}">
+               <div class="error">{{messages[4]}}</div>
             </div>
             <br>
             <button type="submit" class="btn btn-default">Submit</button>
-            {%endwith%}
           </form>
+          {%endwith%}
       </div>
     </div>
+    
   </div>
 </div>
 <div class="header-left">

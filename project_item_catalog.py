@@ -19,9 +19,12 @@ session = DBSession()
 
 @app.route('/')
 @app.route('/catalog')
-def showCatalog():
+def showCatalog(user=None):
     filterCategoryName = 'none'
+    
     categories = session.query(Category).all()
+    #if user:  
+    #else:
     items = session.query(Item).all()
     return render_template('catalog.html', categories=categories,items=items, filterCategoryName = filterCategoryName)
 
@@ -79,8 +82,8 @@ def showLogIn():
     response.set_cookie('state', state)
     return response
     
-@app.route('/welcome', methods = ['POST'])
-def showWelcome():
+@app.route('/loginuser', methods = ['POST'])
+def loginUser():
     if login_session['state'] != request.cookies.get('state'):
        response = make_response(json.dumps('Invalid state parameter.'), 401)
        response.headers['Content-Type'] = 'application/json'
@@ -92,101 +95,93 @@ def showWelcome():
     password  = request.form['logInPassword']
     
           
-    p1 = helper_functions.valid_username(username)
-    p2 = helper_functions.valid_username(password)
-    print username,password
-    print p1,p2
+    valid_usr = helper_functions.valid_username(username)
+    valid_pw = helper_functions.valid_username(password)
     #If sentence to detect error in login.
     error_login = ''
   
-    if (p1 is None or p2 is None):
-        flash(username)
-        flash('Invalid username or password')
-    
-        #response = make_response(json.dumps('Invalid username or password'), 401)
-        #response.headers['Content-Type'] = 'application/json'
-        #return response
+    if (valid_usr is None or valid_pw is None):
+        flash(username,'login')
+        flash('Invalid username or password','login')
+        
         return redirect(url_for('showLogIn'))
     else:
         user = session.query(User).filter_by(name=username).first()
+        print user
         #user = None
         if user is None or user.password is None or not helper_functions.valid_pw(username,password, user.password):
-           flash(username)
-           flash('Invalid login')
+           flash(username,'login')
+           flash('Invalid login','login')
            return redirect(url_for('showLogIn'))
         else:
-            print 'user exists'
+            login_session['username'] = username
+            login_session['email'] = email
             return redirect(url_for('showCatalog'))
 
 @app.route('/signup', methods = ['POST'])
-def showSignUp():    
+def showSignUp():
+    if login_session['state'] != request.cookies.get('state'):
+       response = make_response(json.dumps('Invalid state parameter.'), 401)
+       response.headers['Content-Type'] = 'application/json'
+       return response
+    
     username = request.form['nameSignUp']
     password  = request.form["passwordSignUp"]
     verify  = request.form["verifySignUp"]
     email  = request.form["emailSignUp"]
-    print username,password,verify,email
-    """
-    
 
+    user = session.query(User).filter_by(name=username).first()
+    
+    
+    flash(username,'signup')
     valid_usr = helper_functions.valid_username(username)
     valid_pw = helper_functions.valid_username(password)
     valid_em = helper_functions.valid_email(email)
 
-    error_username = ''
-    error_password =''
-    error_verify = ''
-    error_email=''
-    passed_tests = True
     if (valid_usr is None):
-       error_username = 'This is not a valid username.'
-       passed_tests = False
+        flash('Invalid username','signup')
+    else:
+        if user is not None:
+           flash('User exists','signup')
+        else:
+            flash('','signup')
+            
     if (valid_pw is None):
-       error_password= "That wasn't a valid password"
-       passed_tests = False
+       flash("That wasn't a valid password",'signup')
+       flash('','signup')
     else:
+        flash('','signup')
         if password != verify:
-           error_verify = "Your passwords didn't match."
-           passed_tests = False
- 
-    if (valid_em is None and email != ''):
-       error_email = "This is not a valid email."
-       passed_tests = False
-
-    if passed_tests:
-       users = db.GqlQuery("SELECT* FROM User WHERE username=:user",user=username)
-       for user in users:
-           if user.username == username:
-              passed_tests = False
-              error_username="User already exists."
-              break
-    if self.request.cookies.get('name'):
-        if self.request.cookies.get('name').split("|")[0] == username:
-            passed_tests = False
-            error_username="User already exists."
-  
-    if passed_tests:
-       salt = helper_functions.make_salt()
-       u = user_module.User(username=username, password=helper_functions.make_pw_hash(username,password,salt),email = email)
-       u.put()
-       self.response.headers.add_header('Set-Cookie', 'name=' + str(username) + '|' + str(helper_functions.make_pw_hash(username,password,salt)) + '; Path=/') 
-       self.redirect("/blogs")
+           flash("Your passwords didn't match.",'signup')
+        else:
+            flash('','signup')
+            
+    if (valid_em is None):
+       flash('This is not a valid email.','signup')
     else:
-        self.render("signup.html",
-                  login="",
-                  logout="hidden",
-                  signup="",
-                  newpost="hidden",
-                  blogs="hidden",
-                  username = username,
-                  password = password,
-                  verify = verify,
-                  email = email,
-                  error_username = error_username,
-                  error_password = error_password,
-                  error_verify = error_verify,
-                  error_email = error_email)
-    """
-    return 'prump'
+        flash('','signup')
+        
+    flash(email,'signup')
+    
+    if (valid_usr is None or user is not None or valid_em is None or valid_pw is None or password !=verify):
+        print 'prump'
+        return redirect(url_for('showLogIn'))
+    else:
+        salt = helper_functions.make_salt()
+        newUser = User(name=username,
+                       email = email,
+                       password=helper_functions.make_pw_hash(username,password,salt))
+        session.add(newUser)
+        session.commit()
+        login_session['username'] = username
+        login_session['email'] = email
+        
+        return redirect(url_for('showCatalog'))
+    
+@app.route('/logout', methods = ['GET'])
+def LogOut():
+    login_session.clear()
+    return redirect(url_for('showCatalog'))
 if __name__ == '__main__':
    app.debug = True
    app.run(host = '0.0.0.0', port = 5000)
