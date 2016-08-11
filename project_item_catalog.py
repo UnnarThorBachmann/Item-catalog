@@ -1,4 +1,6 @@
-from flask import Flask, request,  render_template, redirect, url_for, make_response,session as login_session, flash
+from flask import Flask,request, render_template, redirect
+from flask import url_for, make_response, session as login_session
+from flask import flash, jsonify
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from database_setup import Category, Base, Item, User
@@ -201,11 +203,6 @@ def deleteItem(itemName):
            return redirect(url_for('showCatalog'))
            
         
-        
-@app.route('/catalog.json')
-def jsonItem():
-    return str(categories)
-
 @app.route('/login')
 def showLogIn():
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
@@ -330,6 +327,28 @@ def logOut():
     login_session.clear()
     flash('You have logged out','success')
     return redirect(url_for('showCatalog'))
+
+@app.route('/item/<itemName>.json')
+def jsonItem(itemName):
+    item = session.query(Item).filter_by(name=itemName).first()
+    if item is None:
+       response = make_response(json.dumps('Item not found.'), 404)
+       response.headers['Content-Type'] = 'application/json'
+       return response
+    else:
+        return jsonify(item.serialize)
+
+@app.route('/category/<categoryName>.json')
+def jsonCategory(categoryName):
+    print categoryName
+    categoryFiltered = session.query(Category).filter_by(name=categoryName).first()
+    items = session.query(Item).filter_by(category=categoryFiltered).all()
+    if items is None or categoryFiltered is None:
+       response = make_response(json.dumps('No category found.'), 404)
+       response.headers['Content-Type'] = 'application/json'
+       return response
+    else:
+        return jsonify(items=[item.serialize for item in items])
 
 if __name__ == '__main__':
    app.debug = True
