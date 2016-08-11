@@ -43,7 +43,7 @@ def showCatalog():
                            loginButtonHide=loginButtonHide)
 
 @app.route('/catalog/<categoryName>/items')
-def showSelectedCategory(categoryName):
+def showCategory(categoryName):
     category = session.query(Category).filter_by(name=categoryName).first()
     filterCategory=categoryName
 
@@ -70,7 +70,7 @@ def showSelectedCategory(categoryName):
                            n = len(items))
 
 @app.route('/catalog/<categoryName>/<itemName>')
-def showItemFromCategory(itemName,categoryName):
+def showItem(itemName,categoryName):
     if login_session.has_key('username'):
        logoutButtonHide = ''
        loginButtonHide = 'hidden'
@@ -81,14 +81,17 @@ def showItemFromCategory(itemName,categoryName):
         editDeleteHide = 'hidden'
     
     filterItem = session.query(Item).filter_by(name=itemName).first()
-    
-    if filterItem is not None and filterItem.category.name == categoryName and (not login_session.has_key('id') or login_session['id'] == filterItem.user_id):
+    email = filterItem.user.email
+    if filterItem is not None and filterItem.category.name == categoryName\
+       and (not login_session.has_key('id') or login_session['id'] == filterItem.user_id):
        return render_template('item.html',
                               item=filterItem,
                               logoutButtonHide=logoutButtonHide,
                               loginButtonHide=loginButtonHide,
-                              editDeleteHide=editDeleteHide)
+                              editDeleteHide=editDeleteHide,
+                              email=email)
     else:
+        # Not sure if this is the right response.
         response = make_response(json.dumps("File not found"), 404)
         response.headers['Content-Type'] = 'application/json'
         return response
@@ -187,7 +190,8 @@ def deleteItem(itemName):
            return redirect(url_for('showCatalog'))
            
         else:
-            response = make_response(json.dumps("You have not permission for deleting this item."), 400)
+            response = make_response(json.dumps("You have not permission for deleting this item."),
+                                                 400)
             response.headers['Content-Type'] = 'application/json'
             return response
         
@@ -294,7 +298,6 @@ def signUp():
     flash(email,'signup')
     
     if (valid_usr is None or user is not None or valid_em is None or valid_pw is None or password != verify):
-        print 'prump'
         return redirect(url_for('showLogIn'))
     else:
         salt = helper_functions.make_salt()
@@ -313,7 +316,6 @@ def signUp():
 def logOut():
     login_session.clear()
     flash('You have logged out','success')
-    print str(login_session)
     return redirect(url_for('showCatalog'))
 
 if __name__ == '__main__':
