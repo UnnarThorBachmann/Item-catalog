@@ -103,14 +103,17 @@ def editItem(itemName):
        logoutButtonHide = ''
        loginButtonHide = 'hidden'
     else:
-        return redirect(url_for('showCatalog'))
+        return redirect(url_for('showLogIn',
+                                signup='false'))
 
     if request.method == 'GET':
+       
        categories = session.query(Category).all()
        filterItem = session.query(Item).filter_by(name=itemName).first()
     
-       if filterItem is not None:
+       if filterItem is not None and filterItem.user_id == login_session['id']:          
           categories = session.query(Category)
+          login_session['itemId'] = int(filterItem.id)
           return render_template('edit.html',
                              item=filterItem,
                              categories=categories,
@@ -122,10 +125,16 @@ def editItem(itemName):
            return response
     else:
         itemName = request.form['name']
-        itemDescription = request.form['description']
-        
+        itemDescription = request.form['description']   
         itemCategory = session.query(Category).filter_by(name=request.form['category']).first()
-        itemEdited = session.query(Item).filter_by(name=itemName).first()
+        itemEdited = session.query(Item).filter_by(id=login_session['itemId']).first()
+        
+        
+        if itemEdited is None or itemEdited.user_id != login_session['id']:
+           response = make_response(json.dumps("File not found"), 404)
+           response.headers['Content-Type'] = 'application/json'
+           return response
+        
         itemEdited.name=itemName
         itemEdited.description = itemDescription
         itemEdited.category = itemCategory
@@ -142,7 +151,8 @@ def newItem():
        logoutButtonHide = ''
        loginButtonHide = 'hidden'
     else:
-        return redirect(url_for('showCatalog'))
+        redirect(url_for('showLogIn',
+                         signup='false'))
     
     if request.method == 'GET':   
        categories = session.query(Category).all()
@@ -170,30 +180,27 @@ def newItem():
 
 @app.route('/catalog/<itemName>/delete', methods = ['POST','GET'])
 def deleteItem(itemName):
-    itemToDelete = session.query(Item).filter_by(name=itemName).first()
     if login_session.has_key('username'):
        logoutButtonHide = ''
        loginButtonHide = 'hidden'
     else:
-        return redirect(url_for('showCatalog'))
+        return redirect(url_for('showLogIn'))
 
-    if request.method == 'GET':   
+    if request.method == 'GET':
+       itemToDelete = session.query(Item).filter_by(name=itemName).first()
+       login_session['itemId'] = int(itemToDelete.id)
+       
        return render_template('delete.html',
                               logoutButtonHide=logoutButtonHide,
                               loginButtonHide=loginButtonHide,
                               itemName=itemToDelete.name)
     else:
-        
-        if itemToDelete.user_id == login_session['id']:
+           itemToDelete = session.query(Item).filter_by(id=login_session['itemId']).first()
            session.delete(itemToDelete)
            session.commit()
            return redirect(url_for('showCatalog'))
            
-        else:
-            response = make_response(json.dumps("You have not permission for deleting this item."),
-                                                 400)
-            response.headers['Content-Type'] = 'application/json'
-            return response
+        
         
 @app.route('/catalog.json')
 def jsonItem():

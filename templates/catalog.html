@@ -30,7 +30,7 @@
             {%else%}
               <h2>{{filterCategoryName}} items ({{n}})</h2>
               {%for item in items%}
-               <li class="list-group-item"><a href="{{url_for('showItem',itemName=item.name,categoryName=item.category.name)}}">{{item.name}}</a></li>
+               <li class="list-group-item"><a class="mainAnchor" href="{{url_for('showItem',itemName=item.name,categoryName=item.category.name)}}">{{item.name}}</a></li>
               {%endfor%}
             {%endif%}
             
