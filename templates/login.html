@@ -5,22 +5,19 @@
   <div class="panel panel-default">
     <div class="panel-heading" role="tab" id="headingOne">
       <h4 class="panel-title">
-        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-          Log in
+        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseLogIn" aria-expanded="{{login}}" aria-controls="collapseLogIn">
+          <h2>Log in</h2>
         </a>
       </h4>
     </div>
-    <div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
+    <div id="collapseLogIn" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
       <div class="panel-body">
-    <h2>Log in</h2>
     {% with messages = get_flashed_messages(category_filter=["login"]) %}
     <form action="{{url_for('loginUser')}}" method = "post">
-
     <div class="form-group">
     <label for="logInName">Name:</label>
     <input type="text" class="form-control" name="logInName" value="{{messages[0]}}">
     </div>
-
     <div class="form-group">
       <label class="medium" for="logInPassword">Password</label>
       <input type="password" class="form-control" name="logInPassword" type="password">
@@ -38,14 +35,13 @@
   <div class="panel panel-default">
     <div class="panel-heading" role="tab" id="headingTwo">
       <h4 class="panel-title">
-        <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-          Sign up
+        <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseSignUp" aria-expanded="{{signup}}" aria-controls="collapseSignUp">
+          <h2>Sign up</h2>
         </a>
       </h4>
     </div>
-    <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+    <div id="collapseSignUp" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
       <div class="panel-body">
-        <h2>Sign up</h2>
         {% with messages = get_flashed_messages(category_filter=["signup"]) %}
           <form action="{{url_for('signUp')}}" method="post">
             <div class="form-group">
@@ -95,4 +91,30 @@
   </span>
 </div>
 </div>
+<script type="text/javascript">
+  if ({{signup}})
+  {
+    if ($('#collapseLogIn').hasClass("in"))
+    {
+      $('#collapseLogIn').collapse();
+    }
+
+    if (!$('#collapseSignUp').hasClass("in"))
+    {
+      $('#collapseSignUp').collapse();
+    }
+  }
+  else {
+    if (!$('#collapseLogIn').hasClass("in"))
+    {
+      $('#collapseLogIn').collapse();
+    }
+
+    if ($('#collapseSignUp').hasClass("in"))
+    {
+      $('#collapseSignUp').collapse();
+    }
+    
+  }
+</script>
 {%endblock%}

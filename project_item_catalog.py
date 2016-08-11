@@ -209,7 +209,8 @@ def showLogIn():
     
     response = make_response(render_template('login.html',
                                              loginButtonHide=loginButtonHide,
-                                             logoutButtonHide=logoutButtonHide))
+                                             logoutButtonHide=logoutButtonHide,
+                                             signup='false'))
     response.set_cookie('state', state)
     return response
     
@@ -235,7 +236,8 @@ def loginUser():
         flash(username,'login')
         flash('Invalid username or password','login')
         
-        return redirect(url_for('showLogIn'))
+        return redirect(url_for('showLogIn',
+                                signup='false'))
     else:
         user = session.query(User).filter_by(name=username).first()
         
@@ -244,7 +246,8 @@ def loginUser():
                                                                                   user.password):
            flash(username,'login')
            flash('Invalid login','login')
-           return redirect(url_for('showLogIn'))
+           return redirect(url_for('showLogIn',
+                                   signup='false'))
         else:
             login_session['username'] = username
             login_session['email'] = user.email
@@ -298,7 +301,10 @@ def signUp():
     flash(email,'signup')
     
     if (valid_usr is None or user is not None or valid_em is None or valid_pw is None or password != verify):
-        return redirect(url_for('showLogIn'))
+        return render_template('login.html',
+                               loginButtonHide='hidden',
+                               logoutButtonHide='hidden',
+                               signup='true')
     else:
         salt = helper_functions.make_salt()
         newUser = User(name=username,
