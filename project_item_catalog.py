@@ -135,12 +135,16 @@ def editItem(itemName):
     """
     This function is for editing an item.
 
+    Args: Name of the item. 
+
     GET: Renders a form for editing the name, description and category.
     
     POST: Updates the item in the database and redirects to the main page.
     """
 
-    if request.method == 'GET':  
+    if request.method == 'GET':
+       #The GET method.
+        
        # The page is only rendered if there is a user logged in.
        if login_session.has_key('username'):
           logoutButtonHide = ''
@@ -170,7 +174,8 @@ def editItem(itemName):
                            signup='false'))
        
     else:
-        #POST
+        #The POST method.
+        
         #The form is read.
         itemName = request.form['name']
         itemDescription = request.form['description']   
@@ -206,7 +211,10 @@ def newItem():
     GET: Renders the form for making a new item.
     POST: Creates a new item.
     """
+    
     if request.method == 'GET':
+       # The GET method.
+       
        # If user is not logged in the he is redirected
        # to the log in page.
        if login_session.has_key('username'):
@@ -223,7 +231,7 @@ def newItem():
             
        
     else:
-        #POST
+        #The POST method.
         
         #Reading the form.
         itemName = request.form['name']
@@ -248,31 +256,63 @@ def newItem():
 
 @app.route('/catalog/<itemName>/delete', methods = ['POST','GET'])
 def deleteItem(itemName):
-    if login_session.has_key('username'):
-       logoutButtonHide = ''
-       loginButtonHide = 'hidden'
-    else:
-        return redirect(url_for('showLogIn'))
+    """
+    A method to delete an item.
+
+    Args: The name of the item.
+
+    POST: Deletes the item.
+    
+    GET: Renders the form (consisting of a single button). On pressing the
+         button the item is deleted.
+    """
+    
 
     if request.method == 'GET':
+       # The GET method
        itemToDelete = session.query(Item).filter_by(name=itemName).first()
-       login_session['itemId'] = int(itemToDelete.id)
+
+       # Renders the page the user is logged on and if the user has
+       # the same id as the item to delete.
        
-       return render_template('delete.html',
-                              logoutButtonHide=logoutButtonHide,
-                              loginButtonHide=loginButtonHide,
-                              itemName=itemToDelete.name)
+       if login_session.has_key('username')\
+          and login_session["id"] == itemToDelete.user_id:
+           
+          logoutButtonHide = ''
+          loginButtonHide = 'hidden'
+          
+          login_session['itemId'] = int(itemToDelete.id)
+       
+          return render_template('delete.html',
+                                 logoutButtonHide=logoutButtonHide,
+                                 loginButtonHide=loginButtonHide,
+                                 itemName=itemToDelete.name)
+       else:
+           # Otherwise redirect to the log in page.
+           return redirect(url_for('showLogIn',
+                                   signup='false'))
+       
     else:
-           itemToDelete = session.query(Item).filter_by(id=login_session['itemId']).first()
-           session.delete(itemToDelete)
-           session.commit()
-           return redirect(url_for('showCatalog'))
+        # The POST method.
+        itemToDelete = session.query(Item).filter_by(id=login_session['itemId']).first()
+        session.delete(itemToDelete)
+        session.commit()
+        return redirect(url_for('showCatalog'))
            
         
 @app.route('/login')
 def showLogIn():
+    """
+    Renders the log in page.
+    The log in page contains three forms.
+    
+    Two forms to for the local log system.
+    One for a facebook log in. 
+    """
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
                     for x in xrange(32))
+
+    # The log in session keeps a state variable to prevent forgery as in class.
     login_session['state'] = state
     loginButtonHide = 'hidden'
     logoutButtonHide = 'hidden'
@@ -281,32 +321,44 @@ def showLogIn():
                                              loginButtonHide=loginButtonHide,
                                              logoutButtonHide=logoutButtonHide,
                                              signup='false'))
+    
+    # The state is written to a cookie.
     response.set_cookie('state', state)
     return response
     
 @app.route('/loginuser', methods = ['POST'])
 def loginUser():
+    """
+    This method reads the log in form and renders appropirate page.
+    """
+    
+    # From class. In case of the state variable in the cookie
+    # is not the same as in the login_session.
     if login_session['state'] != request.cookies.get('state'):
        response = make_response(json.dumps('Invalid state parameter.'), 401)
        response.headers['Content-Type'] = 'application/json'
        return response
 
-    passed_tests = True
-  
+    # Read the log in form.
     username = request.form['logInName']
     password  = request.form['logInPassword']
     
-          
+    # Validates the username and password
     valid_usr = valid_username(username)
     valid_pw = valid_username(password)
-  
+
+    # If the username and password are not valid
+    # the log in page is rerendered with a flash message.
     if (valid_usr is None or valid_pw is None):
         flash(username,'login')
         flash('Invalid username or password','login')
-        
         return redirect(url_for('showLogIn',
                                 signup='false'))
     else:
+        # If the user exists then render the
+        # catalog page. Else redirect to the login page with
+        # appropirate flash messages.
+        
         user = session.query(User).filter_by(name=username).first()
         if user is None or user.password is None or not valid_password(username,
                                                                  password,
@@ -324,55 +376,67 @@ def loginUser():
 
 @app.route('/signup', methods = ['POST'])
 def signUp():
+    """
+    This method reads the sign up form and renders appropirate page.
+    """
+    
+    # From class. In case of the state variable in the cookie
+    # is not the same as in the login_session.
     if login_session['state'] != request.cookies.get('state'):
        response = make_response(json.dumps('Invalid state parameter.'), 401)
        response.headers['Content-Type'] = 'application/json'
        return response
-    
+
+    # Read the sign up form.
     username = request.form['nameSignUp']
     password  = request.form["passwordSignUp"]
     verify  = request.form["verifySignUp"]
     email  = request.form["emailSignUp"]
 
+
+    # To check if user exists.
     user = session.query(User).filter_by(name=username).first()
     
+    # Check if username, email and password is valid.
     
-    flash(username,'signup')
     valid_usr = valid_username(username)
     valid_pw = valid_username(password)
     valid_em = valid_email(email)
 
+    # Flash appropirate messages depending on what can go
+    # wrong.
+    
+    flash(username,'signup')
     if (valid_usr is None):
         flash('Invalid username','signup')
     else:
-        if user is not None:
-           flash('User exists','signup')
-        else:
-            flash('','signup')
-            
-    if (valid_psw is None):
+        # If user exists.
+        flash('User exists','signup') if user is not None else flash('','signup')
+    if (valid_pw is None):
        flash("That wasn't a valid password",'signup')
        flash('','signup')
     else:
         flash('','signup')
-        if password != verify:
-           flash("Your passwords didn't match.",'signup')
-        else:
-            flash('','signup')
-            
-    if (valid_em is None):
-       flash('This is not a valid email.','signup')
-    else:
-        flash('','signup')
-        
-    flash(email,'signup')
+        flash("Your passwords didn't match.",'signup')\
+                    if password != verify else flash('','signup')
+
+    flash('This is not a valid email.','signup')\
+                if valid_em is None else flash('','signup')
     
-    if (valid_usr is None or user is not None or valid_em is None or valid_pw is None or password != verify):
+    flash(email,'signup')
+    # If user exists or parameters are invalid.
+    if (valid_usr is None\
+        or user is not None\
+        or valid_em is None\
+        or valid_pw is None\
+        or password != verify):
         return render_template('login.html',
                                loginButtonHide='hidden',
                                logoutButtonHide='hidden',
                                signup='true')
     else:
+        # If user does not exist, password, username and email are valid,
+        # create  a user and redirect to the main page.
         salt = make_salt()
         newUser = User(name=username,
                        email = email,
@@ -387,12 +451,23 @@ def signUp():
     
 @app.route('/logout', methods = ['GET'])
 def logOut():
+    """
+    When the log out button is pressed the
+    log in session is cleared and the main
+    page is rerendered.
+    """
+    
     login_session.clear()
     flash('You have logged out','success')
     return redirect(url_for('showCatalog'))
 
 @app.route('/item/<itemName>.json')
 def jsonItem(itemName):
+    """
+    Returns a json of an item.
+
+    Args: The name of the item.
+    """
     item = session.query(Item).filter_by(name=itemName).first()
     if item is None:
        response = make_response(json.dumps('Item not found.'), 404)
@@ -403,7 +478,11 @@ def jsonItem(itemName):
 
 @app.route('/category/<categoryName>.json')
 def jsonCategory(categoryName):
-    print categoryName
+    """
+    Returns an array of json elements in category categoryName
+
+    Args: The name of the category name.
+    """
     categoryFiltered = session.query(Category).filter_by(name=categoryName).first()
     items = session.query(Item).filter_by(category=categoryFiltered).all()
     if items is None or categoryFiltered is None:
@@ -415,4 +494,4 @@ def jsonCategory(categoryName):
 
 if __name__ == '__main__':
    app.debug = True
-   app.run(host = '0.0.0.0', port = 5000)
+   app.run(host = '0.0.0.0', port = 8000)
