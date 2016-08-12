@@ -1,3 +1,7 @@
+"""
+Author: Unnar Thor Bachmann.
+"""
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -13,6 +17,7 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+# Allowed categories
 categories = ['math',
               'english',
               'humanities',
@@ -21,7 +26,7 @@ categories = ['math',
               'foreign languages',
               'social science']
 
-           
+# Items initally in the database.      
 items = [{'title': 'Calculus 3000',
           'description': 'I have Calculus 3000 for sale.',
           'category': 'math',
@@ -78,11 +83,13 @@ User2 = User(name=username,
 session.add(User2)
 session.commit()
 
+# Adding the categories to the database.
 for category in categories:
     cat = Category(name = category)
     session.add(cat)
     session.commit()
 
+# Adding the items to the database.
 for item in items:
     selectedCategory = session.query(Category).filter_by(name=item['category']).one()
     randInt = random.randint(0,1)
