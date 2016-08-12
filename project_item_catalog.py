@@ -6,16 +6,17 @@ Author: Unnar Thor Bachmann.
 This module uses flask and sqlalchemy to make a multi user CRUD page.
 Each user can create and update his item if logged in. Each item is in a different category. 
 """
-
 from flask import Flask,request, render_template, redirect
 from flask import url_for, make_response, session as login_session
 from flask import flash, jsonify
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, asc, desc
 from sqlalchemy.orm import sessionmaker
 from database_setup import Category, Base, Item, User
+from datetime import date
 import json
 import random
 import string
+
 
 # These helper functions were created in the multi user blog project.
 from helper_functions import valid_username, valid_password, valid_email, make_salt, make_pw_hash
@@ -32,6 +33,7 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+
 @app.route('/')
 @app.route('/catalog')
 def showCatalog():
@@ -39,21 +41,29 @@ def showCatalog():
     This method renders the main page of the app. 
     """
     filterCategoryName = 'none'
+    items = session.query(Item).order_by(desc(Item.date)).all()
+    for item in items:
+        print item.date
 
+    queryCategory = session.query(Category)
+    # I am going to display at maximum as many items as there are categories.
+    n = queryCategory.count()
+    
     # Rendering the page differently when user is logged in.
     if login_session.has_key('username'):
        addButtonHide = ''
        logoutButtonHide = ''
        loginButtonHide = 'hidden'
-       items = session.query(Item).filter_by(user_id=login_session['id']).all()
+       queryItems = session.query(Item).filter_by(user_id=login_session['id'])
+       items = queryItems.order_by(desc(Item.date)).slice(0,n).all()
     else:
         addButtonHide = 'hidden'
         logoutButtonHide = 'hidden'
         loginButtonHide = ''
-        items = session.query(Item).all()
+        items = session.query(Item).order_by(desc(Item.date)).slice(0,n).all()
 
-
-    categories = session.query(Category).all()
+    #items = items[:n]
+    categories = queryCategory.all()
     return render_template('catalog.html',
                            categories=categories,
                            items=items,
@@ -68,24 +78,29 @@ def showCategory(categoryName):
     This page render the main page of the app were only items
     in give category are rendered.
     """
-    category = session.query(Category).filter_by(name=categoryName).first()
+    queryCategory = session.query(Category)
+    # I am going to display at maximum as many items as there are categories.
+    n = queryCategory.count()
+    category = queryCategory.filter_by(name=categoryName).first()
+    
     filterCategory=categoryName
+    
 
     # Rendering the page differently when user is logged in.
     if login_session.has_key('username'):
        addButtonHide = ''
        logoutButtonHide = ''
        loginButtonHide = 'hidden'
-       category = session.query(Category).filter_by(name=categoryName).first()
-       query = session.query(Item).filter(Item.user_id==login_session['id'])
-       items = query.filter(Item.category==category).all()
+       category = queryCategory.filter_by(name=categoryName).first()
+       queryItems = session.query(Item).filter(Item.user_id==login_session['id'])
+       items = queryItems.filter(Item.category==category).slice(0,n).all()
     else:
         addButtonHide = 'hidden'
         logoutButtonHide = 'hidden'
         loginButtonHide = ''
-        items = session.query(Item).filter_by(category=category).all()
-
-    categories = session.query(Category).all()
+        items = session.query(Item).filter_by(category=category).slice(0,n).all()
+        
+    categories = queryCategory.all()
     return render_template('catalog.html',
                            categories=categories,
                            items=items,
@@ -197,6 +212,7 @@ def editItem(itemName):
         itemEdited.category_id = itemCategory.id
         itemEdited.user = session.query(User).filter_by(name=login_session['username']).first()
         itemEdited.user_id = int(login_session['id'])
+        itemEdited.date = date.today()
         
         # The database is updated.
         session.add(itemEdited)
@@ -248,7 +264,8 @@ def newItem():
                        user_id = int(login_session['id']),
                        user = user,
                        category = category,
-                       category_id = category.id)
+                       category_id = category.id,
+                       date=date.today())
         session.add(newItem)
         session.commit()
         return redirect(url_for('showCatalog'))          

@@ -2,43 +2,81 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from database_setup import Category, Base, Item, User
+from helper_functions import valid_username, valid_password
+from helper_functions import valid_email, make_salt, make_pw_hash
+import random
+from datetime import date
 
+# Connecting to the database.
 engine = create_engine('sqlite:///catalog.db')
-# Bind the engine to the metadata of the Base class so that the
-# declaratives can be accessed through a DBSession instance
 Base.metadata.bind = engine
-
 DBSession = sessionmaker(bind=engine)
-# A DBSession() instance establishes all conversations with the database
-# and represents a "staging zone" for all the objects loaded into the
-# database session object. Any change made against the objects in the
-# session won't be persisted into the database until you call
-# session.commit(). If you're not happy about the changes, you can
-# revert all of them back to the last commit by calling
-# session.rollback()
 session = DBSession()
 
-categories = ['math','icelandic', 'english', 'danish','spanish','biology', 'physics']
+categories = ['math',
+              'english',
+              'humanities',
+              'science',
+              'sports',
+              'foreign languages',
+              'social science']
 
            
-items = [{'title': 'Calculus 3000', 'description': 'I have Calculus 3000 for sale. Please contact me in 848-0112.', 'category': 'math', 'id':  1},
-         {'title': 'Spanish 103', 'description': 'I have Spanish 103 for sale.', 'category': 'spanish', 'id': 2},
-         {'title': 'Danish 103', 'description': 'I have Danish 103 for sale.', 'category': 'danish', 'id': 3},
-         {'title': 'English 103', 'description': 'I have English 103 for sale.', 'category': 'english', 'id': 4},
-         {'title': 'Biology 103', 'description': 'I have Biology 103 for sale.', 'category': 'biology', 'id': 5},      
-         {'title': 'Physics 103', 'description': 'I have Physics 103 for sale.', 'category': 'physics', 'id': 6},
-         {'title': 'a', 'description': 'I have Physics 103 for sale.', 'category': 'physics', 'id': 7}
+items = [{'title': 'Calculus 3000',
+          'description': 'I have Calculus 3000 for sale.',
+          'category': 'math',
+          'id':
+          1},
+         {'title': 'Spanish 103',
+          'description': 'I have Spanish 103 for sale.',
+          'category': 'foreign languages',
+          'id': 2},
+         {'title': 'Sports 103',
+          'description': 'I have Sports 103 for sale. I am listening to offers.',
+          'category': 'sports',
+          'id': 3},
+         {'title': 'English 103',
+          'description': 'I have English 103 for sale. Price 40 dollars.',
+          'category': 'english',
+          'id': 4},
+         {'title': 'The Secret Diary of Socrates',
+          'description': 'The first year textbook. Price 30 dollars',
+          'category': 'humanities',
+          'id': 5},      
+         {'title': 'Physics 103',
+          'description': 'I have Physics 103 for sale. Price 40 dollars.',
+          'category': 'science',
+          'id': 6},
+         {'title': 'Theories of Karl Marx',
+          'description': 'I am listening to offers. Telephone 848-0112.',
+          'category': 'social science',
+          'id': 7}
        ]
 
-# Create dummy user
-User1 = User(name="Sigrun", email="sigrun@fa.is")
+# Create two dummy users with the same methods
+# as we did in the multi users blogg project.
+
+salt = make_salt()
+username = "Laura"
+password = "rasputin"
+email = "laura@fa.is"
+User1 = User(name=username,
+            email = email,
+            password=make_pw_hash(username,password,salt))
+
 session.add(User1)
 session.commit()
 
-User2 = User(name="Unnar", email="unnar@fa.is")
+salt = make_salt()
+username = "Adam"
+password = "ransack123"
+email = "adam@fa.is"
+User2 = User(name=username,
+            email = email,
+            password=make_pw_hash(username,password,salt))
+
 session.add(User2)
 session.commit()
-
 
 for category in categories:
     cat = Category(name = category)
@@ -47,9 +85,23 @@ for category in categories:
 
 for item in items:
     selectedCategory = session.query(Category).filter_by(name=item['category']).one()
-    if item['category'] == 'spanish' or item['category'] == 'danish' or item['category'] == 'english' or item['category'] == 'icelandic':
-       it = Item(name=item['title'], description = item['description'], user=User1, category = selectedCategory)
+    randInt = random.randint(0,1)
+    if randInt == 0:
+       it = Item(name=item['title'],
+                 description = item['description'],
+                 user=User1, category =
+                 selectedCategory,
+                 date=date(random.randint(2008,2016),
+                           random.randint(1,12),
+                           random.randint(1,28)))
+                 
     else:
-        it = Item(name=item['title'], description = item['description'], user=User2, category = selectedCategory)
+        it = Item(name=item['title'],
+                  description = item['description'],
+                  user=User2,
+                  category = selectedCategory,
+                  date=date(random.randint(2008,2016),
+                           random.randint(1,12),
+                           random.randint(1,28)))
     session.add(it)
     session.commit()
