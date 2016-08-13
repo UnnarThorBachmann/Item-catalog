@@ -507,6 +507,7 @@ def jsonCategory(categoryName):
 
 @app.route('/fbconnect', methods=['POST'])
 def fbconnect():
+    print 'prump'
     if request.args.get('state') != login_session['state']:
         response = make_response(json.dumps('Invalid state parameter.'), 401)
         response.headers['Content-Type'] = 'application/json'
