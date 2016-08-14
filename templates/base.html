@@ -10,7 +10,72 @@
   <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
   <script src="https://netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
 <script src="//apis.google.com/js/platform.js?onload=start"> </script>
+<script>
+  // This is called with the results from from FB.getLoginStatus().
+  function connectServer() {
+    var access_token = FB.getAuthResponse()['accessToken'];
+    FB.api('/me', function(response) {
+      console.log('Successful login for: ' + response.name);
+      $.ajax({
+        type: 'POST',
+        url: '/fblogin?state={{STATE}}',
+        processData: false,
+        data: access_token,
+        contentType: 'application/octet-stream; charset=utf-8',
+        success: function(result) {
+          // Handle or verify the server response if necessary.
+          if(!result) {
+            $('#errorFbLogin').html('Facebook login failed');
+          }
+        }
+      });
+    });
+  }
+  /*
+  function connectToSever(response) {
+    console.log(response);
+    console.log('prump');
+    /*
+    if (response.status === 'connected') {
+      // Logged into your app and Facebook.
+      testAPI();
+    } else if (response.status === 'not_authorized') {
+      // The person is logged into Facebook, but not your app.
+      document.getElementById('status').innerHTML = 'Please log ' +
+        'into this app.';
+    } else {
+      // The person is not logged into Facebook, so we're not sure if
+      // they are logged into this app or not.
+      document.getElementById('status').innerHTML = 'Please log ' +
+        'into Facebook.';
+    }
+  }
+  */
+  // This function is called when someone finishes with the Login
+  // Button.  See the onlogin handler attached to it in the sample
+  // code below.
 
+
+  window.fbAsyncInit = function() {
+    FB.init({
+      appId      : '858989607565199',
+      cookie     : true,  // enable cookies to allow the server to access 
+      xfbml      : true,  // parse social plugins on this page
+      version    : 'v2.7' // use graph api version 2.5
+    });
+  };
+
+  // Load the SDK asynchronously
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/sdk.js";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+  // Fleiri föll.
+
+</script>
   <style type="text/css" media="screen">
     body {
             background-color: lightgray;
