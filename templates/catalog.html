@@ -1,7 +1,7 @@
 {%extends "base.html"%}
 {%block content%}
 
-    <div class="main panel panel-default">
+    <div class="main panel panel-default" id='mainDiv'>
       {% with messages = get_flashed_messages(category_filter=["success"]) %}
      {%if messages%}
      <div class="alert alert-success" role="alert">

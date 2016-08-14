@@ -1,13 +1,11 @@
 {%extends "base.html"%}
 {%block content%}
-<div class="jumbotron">
+<div class="jumbotron" id="FBpanel">
   <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-  <div class="panel panel-default">
+  <div class="panel panel-default" >
     <div class="panel-heading" role="tab" id="headingTwo">
       <fb:login-button scope="public_profile,email" onlogin="connectServer();">
       </fb:login-button>
-    </div>
-    <div class="error" id="errorFbLogin">
     </div>
   </div>
   <div class="panel panel-default">
@@ -85,6 +83,20 @@
 <script>
   // This is called with the results from from FB.getLoginStatus().
   function connectServer() {
+    var progressDiv = document.createElement('div');
+    progressDiv.setAttribute('class','progress');
+    var subDiv = document.createElement('div');
+    subDiv.setAttribute('class','progress-bar progress-bar-striped active');
+    subDiv.setAttribute('role','progressbar');
+    subDiv.setAttribute('aria-valunow','40');
+    subDiv.setAttribute('aria-valuemin','0');
+    subDiv.setAttribute('aria-valuemax','0');
+    var randWait = Math.floor((Math.random() * 30) + 70);
+    subDiv.setAttribute('style','width:'+ randWait + '%;');
+    subDiv.innerHTML = randWait + '%';
+    progressDiv.appendChild(subDiv);
+    //document.getElementById("FBpanel").appendChild(progressDiv);
+    document.getElementById("FBpanel").insertBefore(progressDiv,document.getElementById("FBpanel").firstChild);
     var access_token = FB.getAuthResponse()['accessToken'];
     FB.api('/me', function(response) {
       $.ajax({
@@ -127,8 +139,6 @@
   }(document, 'script', 'facebook-jssdk'));
   // Fleiri föll.
 
-</script>
-<script type="text/javascript">
   if ({{signup}})
   {
     if ($('#collapseLogIn').hasClass("in"))

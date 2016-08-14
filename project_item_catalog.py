@@ -165,7 +165,8 @@ def editItem(itemName):
           # Splitting the query do to length. The item is filtered
           # with respect to name and the id of the current user.
           query =  session.query(Item).filter_by(name=itemName)
-          filterItem = query.filter_by(user_id = int(login_session['id'])).first()
+          currentUser = session.query(User).filter_by(name = login_session['username'])
+          filterItem = query.filter_by(user = currentUser).first()
 
           #If the item does not exist the page is not rendered.
           if filterItem is not None:          
@@ -368,7 +369,8 @@ def loginUser():
         flash(username,'login')
         flash('Invalid username or password','login')
         return redirect(url_for('showLogIn',
-                                signup='false'))
+                                signup='false',
+                                STATE=login_session['state']))
     else:
         # If the user exists then render the
         # catalog page. Else redirect to the login page with
@@ -448,7 +450,8 @@ def signUp():
         return render_template('login.html',
                                loginButtonHide='hidden',
                                logoutButtonHide='hidden',
-                               signup='true')
+                               signup='true',
+                               STATE=login_session['state'])
     else:
         # If user does not exist, password, username and email are valid,
         # create  a user and redirect to the main page.
@@ -554,8 +557,7 @@ def fbLogIn():
     
     if user is None:
        user = User(name=login_session['username'],
-                   email= login_session['email'],
-                   id =  login_session['id'])
+                   email= login_session['email'])
        session.add(user)
        session.commit()
     return 'ok'
