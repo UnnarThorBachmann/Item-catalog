@@ -1,11 +1,29 @@
 {%extends "base.html"%}
 {%block content%}
-<div class="jumbotron" id="FBpanel">
+<div class="jumbotron" id="loginPanel">
   <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
   <div class="panel panel-default" >
-    <div class="panel-heading" role="tab" id="headingTwo">
+    <div class="panel-heading" role="tab" id="headingFB">
       <fb:login-button scope="public_profile,email" onlogin="connectServer();">
       </fb:login-button>
+    </div>
+    <div id="errorFBLogin">
+    </div>
+  </div>
+  <div class="panel panel-default" >
+    <div class="panel-heading" role="tab" id="headingGoogle">
+      <div id="signInButton">
+        <span class="g-signin"
+            data-scope="openid email"
+            data-clientid="56296313039-v0t49qs2gjcc5dkia7533fq6sejefp0q.apps.googleusercontent.com"
+            data-redirecturi="postmessage"
+            data-accesstype="offline"
+            data-cookiepolicy="single_host_origin"
+            data-callback="signInCallback"
+            data-approvalprompt="force">
+        </span>
+      </div>
+      <div id="errorGLogin"></div>
     </div>
   </div>
   <div class="panel panel-default">
@@ -81,8 +99,7 @@
 </div>
 </div>
 <script>
-  // This is called with the results from from FB.getLoginStatus().
-  function connectServer() {
+  function addProgressBar() {
     var progressDiv = document.createElement('div');
     progressDiv.setAttribute('class','progress');
     var subDiv = document.createElement('div');
@@ -95,8 +112,10 @@
     subDiv.setAttribute('style','width:'+ randWait + '%;');
     subDiv.innerHTML = randWait + '%';
     progressDiv.appendChild(subDiv);
-    //document.getElementById("FBpanel").appendChild(progressDiv);
-    document.getElementById("FBpanel").insertBefore(progressDiv,document.getElementById("FBpanel").firstChild);
+    document.getElementById("loginPanel").insertBefore(progressDiv,document.getElementById("loginPanel").firstChild);
+  }
+  function connectServer() {
+    addProgressBar();
     var access_token = FB.getAuthResponse()['accessToken'];
     FB.api('/me', function(response) {
       $.ajax({
@@ -108,7 +127,7 @@
         success: function(result) {
           // Handle or verify the server response if necessary.
           if(result) {
-            window.location.href = "/fbsuccess";
+            window.location.href = "/success";
           }
           else {
             console.log('not success')
@@ -118,8 +137,6 @@
       });
     });
   }
- 
-
   window.fbAsyncInit = function() {
     FB.init({
       appId      : '858989607565199',
@@ -164,7 +181,31 @@
     
   }
 </script>
-
-<div id="status">
-</div>
+<script>
+function signInCallback(authResult) {
+  addProgressBar();
+  if (authResult['code']) {
+    // Hide the sign-in button now that the user is authorized
+    $('#signinButton').attr('style', 'display: none');
+    // Send the one-time-use code to the server, if the server responds, write a 'login successful' message to the web page and then redirect back to the main restaurants page
+    $.ajax({
+      type: 'POST',
+      url: '/glogin?state={{STATE}}',
+      processData: false,
+      data: authResult['code'],
+      contentType: 'application/octet-stream; charset=utf-8',
+      success: function(result) {
+        if(result) {
+            console.log("/success");
+            window.location.href = "/success";
+          }
+          else {
+            console.log('not success')
+            $('#errorGLogin').html('Google login failed');
+          }
+      }//end of success
+    });// end of ajax. 
+  }//end of if
+}//end of signInCallback
+</script>
 {%endblock%}

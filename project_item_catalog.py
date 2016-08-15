@@ -17,7 +17,9 @@ import json
 import random
 import string
 import httplib2
-
+import requests
+from oauth2client.client import flow_from_clientsecrets
+from oauth2client.client import FlowExchangeError
 
 # These helper functions were created in the multi user blog project.
 from helper_functions import valid_username, valid_password, valid_email, make_salt, make_pw_hash
@@ -164,9 +166,9 @@ def editItem(itemName):
           categories = session.query(Category).all()
           # Splitting the query do to length. The item is filtered
           # with respect to name and the id of the current user.
-          query =  session.query(Item).filter_by(name=itemName)
-          currentUser = session.query(User).filter_by(name = login_session['username'])
-          filterItem = query.filter_by(user = currentUser).first()
+          query =  session.query(Item).filter(Item.name==itemName)
+          currentUser = session.query(User).filter_by(name = login_session['username']).first()
+          filterItem = query.filter(Item.user == currentUser).first()
 
           #If the item does not exist the page is not rendered.
           if filterItem is not None:          
@@ -251,15 +253,17 @@ def newItem():
         itemName = request.form['name']
         itemDescription = request.form['description']
         itemCategory = request.form['category']
-
+        print login_session
         # Finding the user and the category of the item from database.
         user = session.query(User).filter_by(name=login_session['username']).first()
+        print user.name
         category = session.query(Category).filter_by(name=itemCategory).first()
 
         #Creating the user
+        print login_session
         newItem = Item(name=itemName,
                        description = itemDescription,
-                       user_id = int(login_session['id']),
+                       user_id = user.id,
                        user = user,
                        category = category,
                        category_id = category.id,
@@ -474,7 +478,7 @@ def logOut():
     log in session is cleared and the main
     page is rerendered.
     """
-    if login_session.has_key('provider') and login_session['provider']=='facebook':
+    if login_session['provider']=='facebook':
        facebook_id = login_session['id']
        # The access token must me included to successfully logout
        access_token = login_session['access_token']
@@ -482,6 +486,28 @@ def logOut():
        h = httplib2.Http()
        result = h.request(url, 'DELETE')[1]
        
+    elif login_session['provider']=='google':
+        # Only disconnect a connected user.
+        #login_session['credentials'] = credentials.access_token
+
+        #credentials = login_session.get('credentials')
+        access_token = login_session.get('credentials')
+        if access_token is None:
+           response = make_response(
+            json.dumps('Current user not connected.'), 401)
+           response.headers['Content-Type'] = 'application/json'
+           return response
+        #access_token = login_session['']#credentials.access_token
+        url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % access_token
+        h = httplib2.Http()
+        result = h.request(url, 'GET')[0]
+        if result['status'] != '200':
+           # For whatever reason, the given token was invalid.
+           response = make_response(
+            json.dumps('Failed to revoke token for given user.', 400))
+           response.headers['Content-Type'] = 'application/json'
+           return response
+        
     login_session.clear()
     flash('You have logged out','success')
     return redirect(url_for('showCatalog'))
@@ -546,38 +572,128 @@ def fbLogIn():
     login_session['provider'] = 'facebook'
     login_session['username'] = data["name"]
     login_session['email'] = data["email"]
+    #login_session['id'] = data["id"]
     
-    login_session['id'] = data["id"]
     print login_session
     # The token must be stored in the login_session in order to properly logout, let's strip out the information before the equals sign in our token
     stored_token = token.split("=")[1]
     login_session['access_token'] = stored_token
     # see if user exists
-    user = session.query(User).filter_by(id=login_session["id"]).first()
+    user = session.query(User).filter_by(name=login_session['username']).first()
     
     if user is None:
        user = User(name=login_session['username'],
                    email= login_session['email'])
        session.add(user)
        session.commit()
+
+    login_session['id'] = user.id
     return 'ok'
 
 
-@app.route('/fbsuccess')
+@app.route('/success')
 def fbsuccess():
     flash("Now logged in as %s" % login_session['username'],'success')
     return redirect(url_for('showCatalog'))
     
-@app.route('/fbdisconnect')
-def fbdisconnect():
-    facebook_id = login_session['id']
-    # The access token must me included to successfully logout
-    access_token = login_session['access_token']
-    url = 'https://graph.facebook.com/%s/permissions?access_token=%s' % (facebook_id,access_token)
-    h = httplib2.Http()
-    result = h.request(url, 'DELETE')[1]
-    return "you have been logged out"
 
+
+@app.route('/glogin', methods=['POST'])
+def gLogIn():
+    # Validate state token
+    if request.args.get('state') != login_session['state']:
+        response = make_response(json.dumps('Invalid state parameter.'), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    # Obtain authorization code
+    code = request.data
+    try:
+        # Upgrade the authorization code into a credentials object
+        oauth_flow = flow_from_clientsecrets('client_secrets.json', scope='')
+        print "Oauth object."
+        print  oauth_flow 
+        oauth_flow.redirect_uri = 'postmessage'
+        credentials = oauth_flow.step2_exchange(code)
+    except FlowExchangeError:
+        response = make_response(
+            json.dumps('Failed to upgrade the authorization code.'), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # Check that the access token is valid.
+    access_token = credentials.access_token
+    url = ('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=%s'
+           % access_token)
+    h = httplib2.Http()
+    result = json.loads(h.request(url, 'GET')[1])
+    # If there was an error in the access token info, abort.
+    if result.get('error') is not None:
+        response = make_response(json.dumps(result.get('error')), 500)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # Verify that the access token is used for the intended user.
+    gplus_id = credentials.id_token['sub']
+    if result['user_id'] != gplus_id:
+        response = make_response(
+            json.dumps("Token's user ID doesn't match given user ID."), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # Verify that the access token is valid for this app.
+    CLIENT_ID = "56296313039-v0t49qs2gjcc5dkia7533fq6sejefp0q.apps.googleusercontent.com"
+    if result['issued_to'] != CLIENT_ID:
+        response = make_response(
+            json.dumps("Token's client ID does not match app's."), 401)
+        print "Token's client ID does not match app's."
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    stored_credentials = login_session.get('credentials')
+    stored_gplus_id = login_session.get('gplus_id')
+    if stored_credentials is not None and gplus_id == stored_gplus_id:
+        response = make_response(json.dumps('Current user is already connected.'),
+                                 200)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+    # Store the access token in the session for later use.
+    login_session['access_token'] = credentials.access_token
+    login_session['gplus_id'] = gplus_id
+
+    # Get user info
+    userinfo_url = "https://www.googleapis.com/oauth2/v1/userinfo"
+    params = {'access_token': credentials.access_token, 'alt': 'json'}
+    answer = requests.get(userinfo_url, params=params)
+
+    data = answer.json()
+
+    login_session['username'] = data['name']
+    
+    login_session['picture'] = data['picture']
+    login_session['email'] = data['email']
+    # ADD PROVIDER TO LOGIN SESSION
+    login_session['provider'] = 'google'
+    
+
+    # see if user exists, if it doesn't make a new one
+    # user
+    user = session.query(User).filter_by(name=login_session['username']).first()
+
+    if user is None:
+       user = User(name=login_session['username'],
+                   email= login_session['email'])
+       session.add(user)
+       session.commit()
+
+    login_session['id'] = user.id
+    
+    # Fixed after reading forum.
+    login_session['credentials'] = credentials.access_token
+    
+    
+    print "Finishing with gmail login."
+    return 'ok'
 
 if __name__ == '__main__':
    app.debug = True
