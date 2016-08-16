@@ -11,15 +11,14 @@
      {%endwith%}
       <div class="panel-body">
         <div class = "categories">
-          <h2>Flokkar</h2>
-          <ul class="list-group">
+          <h2 class="flokkaMidi">Flokkar</h2>
+          <ul class="list-group" id="flokkar">
             {%for item in categories%}
             <li class="list-group-item"><a class="mainAnchor" href="{{url_for('showCategory',categoryName=item.name)}}">{{item.name}}</a></li>
             {%endfor%}
           </ul>
         </div>
         <div class="items">
-          
           <ul class="list-group">
             {%if filterCategoryName == 'none'%}
               <h2>Nýjustu færslur</h2>

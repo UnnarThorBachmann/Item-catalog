@@ -160,8 +160,31 @@
        .btn-group-vertical {
         width: 60%;
        }
-       @media screen and (max-width: 500px) {
-
+       #flokkaTakki {
+        display: none;
+        margin-bottom: 15px;
+        margin-top: 30px;
+       }
+       @media screen and (max-width: 600px) {
+        .items{
+          width: 90%;
+          float: left;
+          padding-left:5%;
+        }
+        .categories{
+          width: 90%;
+          float: left;
+          padding-left:5%;
+        }
+        .list-group-item {
+          display:inline-flex;
+        }
+      }
+      @media screen and (max-width: 400px) {
+        .header-left {
+          width: 90%;
+          margin-bottom: 0px;
+        }
       }
     </style>
 </head>
@@ -218,6 +241,7 @@
       location.href = "{{url_for('newItem')}}";
       });
     }
+    
   </script>
 
 </html>
