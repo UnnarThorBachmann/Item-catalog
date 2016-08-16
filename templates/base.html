@@ -169,6 +169,9 @@
 
   <nav class="navbar navbar-default" id="navBar">
   <div class="container-fluid">
+    {%if pictureExists%}
+    <img src="{{picture}}" alt="me" style="width:100px;height:100px;"/>
+    {%endif%}
     <div class="header-left">
       <h1><a href = "/">Used Books for Sale</a></h1>
     </div>

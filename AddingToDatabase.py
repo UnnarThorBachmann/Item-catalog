@@ -6,8 +6,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from database_setup import Category, Base, Item, User
-from helper_functions import valid_username, valid_password
-from helper_functions import valid_email, make_salt, make_pw_hash
 import random
 from datetime import date
 
@@ -61,24 +59,18 @@ items = [{'title': 'Calculus 3000',
 # Create two dummy users with the same methods
 # as we did in the multi users blogg project.
 
-salt = make_salt()
 username = "Laura"
-password = "rasputin"
 email = "laura@fa.is"
 User1 = User(name=username,
-            email = email,
-            password=make_pw_hash(username,password,salt))
+            email = email)
 
 session.add(User1)
 session.commit()
 
-salt = make_salt()
 username = "Adam"
-password = "ransack123"
 email = "adam@fa.is"
 User2 = User(name=username,
-            email = email,
-            password=make_pw_hash(username,password,salt))
+            email = email)
 
 session.add(User2)
 session.commit()

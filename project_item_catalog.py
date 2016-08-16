@@ -24,9 +24,6 @@ import requests
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
 
-# These helper functions were created in the multi user blog project.
-from helper_functions import valid_username, valid_password, valid_email, make_salt, make_pw_hash
-
 #Creating the app flask.
 app = Flask(__name__)
 app.secret_key = '94A4QZCD4Q91YWGQ6PTH12YHTBELYR4A'
@@ -59,21 +56,29 @@ def showCatalog():
        loginButtonHide = 'hidden'
        queryItems = session.query(Item).filter_by(user_id=login_session['id'])
        items = queryItems.order_by(desc(Item.date)).slice(0,n).all()
+       pictureExists=True
+       picture = login_session['picture']
+       print picture
     else:
         addButtonHide = 'hidden'
         logoutButtonHide = 'hidden'
         loginButtonHide = ''
         items = session.query(Item).order_by(desc(Item.date)).slice(0,n).all()
+        pictureExists = False
+        picture = ''
 
-    #items = items[:n]
+    
     categories = queryCategory.all()
+    
     return render_template('catalog.html',
                            categories=categories,
                            items=items,
                            filterCategoryName = filterCategoryName,
                            addButtonHide= addButtonHide,
                            logoutButtonHide=logoutButtonHide,
-                           loginButtonHide=loginButtonHide)
+                           loginButtonHide=loginButtonHide,
+                           pictureExists=pictureExists,
+                           picture=picture)
 
 @app.route('/catalog/<categoryName>/items')
 def showCategory(categoryName):
@@ -93,6 +98,8 @@ def showCategory(categoryName):
        addButtonHide = ''
        logoutButtonHide = ''
        loginButtonHide = 'hidden'
+       pictureExists= True
+       picture = login_session['picture']
        category = queryCategory.filter_by(name=categoryName).first()
        queryItems = session.query(Item).filter(Item.user_id==login_session['id'])
        items = queryItems.filter(Item.category==category).all()
@@ -100,6 +107,8 @@ def showCategory(categoryName):
         addButtonHide = 'hidden'
         logoutButtonHide = 'hidden'
         loginButtonHide = ''
+        pictureExists= False
+        picture = ''
         items = session.query(Item).filter_by(category=category).all()
         
     categories = queryCategory.all()
@@ -110,7 +119,9 @@ def showCategory(categoryName):
                            addButtonHide= addButtonHide,
                            logoutButtonHide=logoutButtonHide,
                            loginButtonHide=loginButtonHide,
-                           n = len(items))
+                           n = len(items),
+                           pictureExists=pictureExists,
+                           picture=picture)
 
 @app.route('/catalog/<categoryName>/<itemName>')
 def showItem(itemName,categoryName):
@@ -123,10 +134,14 @@ def showItem(itemName,categoryName):
        logoutButtonHide = ''
        loginButtonHide = 'hidden'
        editDeleteHide = ''
+       pictureExists=True
+       picture = login_session['picture']
     else:
         logoutButtonHide = 'hidden'
         loginButtonHide = ''
         editDeleteHide = 'hidden'
+        pictureExists=False
+        picture = ''
     
     filterItem = session.query(Item).filter_by(name=itemName).first()
     email = filterItem.user.email
@@ -140,7 +155,9 @@ def showItem(itemName,categoryName):
                               logoutButtonHide=logoutButtonHide,
                               loginButtonHide=loginButtonHide,
                               editDeleteHide=editDeleteHide,
-                              email=email)
+                              email=email,
+                              pictureExists=pictureExists,
+                              picture=picture)
     else:
         response = make_response(json.dumps("File not found"), 404)
         response.headers['Content-Type'] = 'application/json'
@@ -166,6 +183,8 @@ def editItem(itemName):
        if login_session.has_key('username'):
           logoutButtonHide = ''
           loginButtonHide = 'hidden'
+          pictureExists=True
+          picture = login_session['picture']
           categories = session.query(Category).all()
           # Splitting the query do to length. The item is filtered
           # with respect to name and the id of the current user.
@@ -182,7 +201,9 @@ def editItem(itemName):
                                     item=filterItem,
                                     categories=categories,
                                     logoutButtonHide=logoutButtonHide,
-                                    loginButtonHide=loginButtonHide)
+                                    loginButtonHide=loginButtonHide,
+                                    pictureExists= pictureExists,
+                                    picture = picture)
           else:
               response = make_response(json.dumps("File not found"), 404)
               response.headers['Content-Type'] = 'application/json'
@@ -239,11 +260,15 @@ def newItem():
        if login_session.has_key('username'):
           logoutButtonHide = ''
           loginButtonHide = 'hidden'
+          pictureExists=True
+          picture = login_session['picture']
           categories = session.query(Category).all()
           return render_template('newItem.html',
                                  categories = categories,
                                  logoutButtonHide=logoutButtonHide,
-                                 loginButtonHide=loginButtonHide)
+                                 loginButtonHide=loginButtonHide,
+                                 pictureExists=pictureExists,
+                                 picture = picture)
        else:
            redirect(url_for('showLogIn',
                             signup='false'))
@@ -302,13 +327,16 @@ def deleteItem(itemName):
            
           logoutButtonHide = ''
           loginButtonHide = 'hidden'
-          
+          pictureExists=True
+          picture = login_session['picture']
           login_session['itemId'] = int(itemToDelete.id)
        
           return render_template('delete.html',
                                  logoutButtonHide=logoutButtonHide,
                                  loginButtonHide=loginButtonHide,
-                                 itemName=itemToDelete.name)
+                                 itemName=itemToDelete.name,
+                                 pictureExists=pictureExists,
+                                 picture = picture)
        else:
            # Otherwise redirect to the log in page.
            return redirect(url_for('showLogIn',
@@ -452,6 +480,7 @@ def fbLogIn():
     result = h.request(url, 'GET')[1]
     token = result.split("&")[0]
 
+    
     url = 'https://graph.facebook.com/v2.7/me?%s&fields=name,id,email' % token
     h = httplib2.Http()
     result = h.request(url, 'GET')[1]
@@ -460,7 +489,14 @@ def fbLogIn():
     login_session['provider'] = 'facebook'
     login_session['username'] = data["name"]
     login_session['email'] = data["email"]
-    #login_session['id'] = data["id"]
+    
+    # Get user picture
+    url = 'https://graph.facebook.com/v2.4/me/picture?%s&redirect=0&height=200&width=200' % token
+    h = httplib2.Http()
+    result = h.request(url, 'GET')[1]
+    data = json.loads(result)
+    login_session['picture'] = data["data"]["url"]
+
     
     # This was written in class.
     stored_token = token.split("=")[1]
@@ -517,7 +553,7 @@ def amazonLogIn():
     headers = {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'}
     h = httplib2.Http()
     access_token_response = json.loads(h.request(url,'POST',urllib.urlencode(post_data),headers=headers)[1])
-
+    
     # If no access token then return error.
     if not access_token_response.has_key('access_token'):
        response = make_response(json.dumps('Invalid state parameter.'), 401)
@@ -544,6 +580,10 @@ def amazonLogIn():
           
        login_session['id'] = user.id
        login_session['provider'] = 'amazon'
+       # Did not find a mechanism to retrive pictures.
+       
+
+       login_session['picture'] = url_for('static', filename='me.png')
        return 'Ok'
     else: 
         return 'error'
