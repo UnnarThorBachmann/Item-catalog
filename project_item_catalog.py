@@ -331,6 +331,8 @@ def showLogIn():
     Two forms to for the local log system.
     One for a facebook log in. 
     """
+    if login_session.has_key('username'):
+       return redirect(url_for('logout'))
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
                     for x in xrange(32))
 
@@ -339,144 +341,14 @@ def showLogIn():
     loginButtonHide = 'hidden'
     logoutButtonHide = 'hidden'
     
-    response = make_response(render_template('login.html',
-                                             loginButtonHide=loginButtonHide,
-                                             logoutButtonHide=logoutButtonHide,
-                                             signup='false',
-                                             STATE=state))
     
-    # The state is written to a cookie for the local log in system.
-    response.set_cookie('state', state)
-    return response
+    return render_template('login.html',
+                           loginButtonHide=loginButtonHide,
+                           logoutButtonHide=logoutButtonHide,
+                           signup='false',
+                           STATE=state)
     
-@app.route('/loginuser', methods = ['POST'])
-def loginUser():
-    """
-    This method reads the log in form and renders appropirate page.
 
-    Redirects to the main page on success.
-    """
-    
-    # From class. In case of the state variable in the cookie
-    # is not the same as in the login_session.
-    if login_session['state'] != request.cookies.get('state'):
-       response = make_response(json.dumps('Invalid state parameter.'), 401)
-       response.headers['Content-Type'] = 'application/json'
-       return response
-
-    # Read the log in form.
-    username = request.form['logInName']
-    password  = request.form['logInPassword']
-    
-    # Validates the username and password
-    valid_usr = valid_username(username)
-    valid_pw = valid_username(password)
-
-    # If the username and password are not valid
-    # the log in page is rerendered with a flash message.
-    if (valid_usr is None or valid_pw is None):
-        flash(username,'login')
-        flash('Invalid username or password','login')
-        return redirect(url_for('showLogIn',
-                                signup='false',
-                                STATE=login_session['state']))
-    else:
-        # If the user exists then render the
-        # catalog page. Else redirect to the login page with
-        # appropirate flash messages.
-        
-        user = session.query(User).filter_by(name=username).first()
-        if user is None or user.password is None or not valid_password(username,
-                                                                 password,
-                                                                 user.password):
-           flash(username,'login')
-           flash('Invalid login','login')
-           return redirect(url_for('showLogIn',
-                                   signup='false'))
-        else:
-            login_session['username'] = username
-            login_session['email'] = user.email
-            login_session['id'] = int(user.id)
-            flash('You are now logged in as %s' % username,'success')
-            return redirect(url_for('showCatalog'))
-
-@app.route('/signup', methods = ['POST'])
-def signUp():
-    """
-    This method reads the sign up form and renders appropirate page.
-
-    Redirects to the main page on success.
-    """
-    
-    # From class. In case of the state variable in the cookie
-    # is not the same as in the login_session.
-    if login_session['state'] != request.cookies.get('state'):
-       response = make_response(json.dumps('Invalid state parameter.'), 401)
-       response.headers['Content-Type'] = 'application/json'
-       return response
-
-    # Read the sign up form.
-    username = request.form['nameSignUp']
-    password  = request.form["passwordSignUp"]
-    verify  = request.form["verifySignUp"]
-    email  = request.form["emailSignUp"]
-
-
-    # To check if user exists.
-    user = session.query(User).filter_by(name=username).first()
-    
-    # Check if username, email and password is valid.
-    
-    valid_usr = valid_username(username)
-    valid_pw = valid_username(password)
-    valid_em = valid_email(email)
-
-    # Flash appropirate messages depending on what can go
-    # wrong.
-    
-    flash(username,'signup')
-    if (valid_usr is None):
-        flash('Invalid username','signup')
-    else:
-        # If user exists.
-        flash('User exists','signup') if user is not None else flash('','signup')
-    if (valid_pw is None):
-       flash("That wasn't a valid password",'signup')
-       flash('','signup')
-    else:
-        flash('','signup')
-        flash("Your passwords didn't match.",'signup')\
-                    if password != verify else flash('','signup')
-
-    flash('This is not a valid email.','signup')\
-                if valid_em is None else flash('','signup')
-    
-    flash(email,'signup')
-    # If user exists or parameters are invalid.
-    if (valid_usr is None\
-        or user is not None\
-        or valid_em is None\
-        or valid_pw is None\
-        or password != verify):
-        return render_template('login.html',
-                               loginButtonHide='hidden',
-                               logoutButtonHide='hidden',
-                               signup='true',
-                               STATE=login_session['state'])
-    else:
-        # If user does not exist, password, username and email are valid,
-        # create  a user and redirect to the main page.
-        salt = make_salt()
-        newUser = User(name=username,
-                       email = email,
-                       password=make_pw_hash(username,password,salt))
-        session.add(newUser)
-        session.commit()
-        login_session['username'] = username
-        login_session['email'] = email
-        login_session['id'] = int(newUser.id)
-        flash('You have signed in as %s' % username,'success')
-        return redirect(url_for('showCatalog'))
     
 @app.route('/logout', methods = ['GET'])
 def logOut():
@@ -485,6 +357,8 @@ def logOut():
 
     Redirects to the main page.
     """
+    if not login_session.has_key('provider'):
+       return redirect(url_for('showCatalog'))
     if login_session['provider']=='facebook':
        facebook_id = login_session['id']
        # The access token must be included to successfully logout
