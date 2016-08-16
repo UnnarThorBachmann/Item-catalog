@@ -1,5 +1,7 @@
 """
 Author: Unnar Thor Bachmann.
+
+Methods for logging in and out with Facebook and Google written in class. Motified by Unnar Thor Bachmann to correct errors and fit to my project.
 """
 
 """
@@ -76,7 +78,7 @@ def showCatalog():
 @app.route('/catalog/<categoryName>/items')
 def showCategory(categoryName):
     """
-    This page render the main page of the app were only items
+    Renders the main page of the app were only items
     in give category are rendered.
     """
     queryCategory = session.query(Category)
@@ -168,7 +170,7 @@ def editItem(itemName):
           # Splitting the query do to length. The item is filtered
           # with respect to name and the id of the current user.
           query =  session.query(Item).filter(Item.name==itemName)
-          currentUser = session.query(User).filter_by(name = login_session['username']).first()
+          currentUser = session.query(User).filter_by(email = login_session['email']).first()
           filterItem = query.filter(Item.user == currentUser).first()
 
           #If the item does not exist the page is not rendered.
@@ -211,7 +213,7 @@ def editItem(itemName):
         itemEdited.description = itemDescription
         itemEdited.category = itemCategory
         itemEdited.category_id = itemCategory.id
-        itemEdited.user = session.query(User).filter_by(name=login_session['username']).first()
+        itemEdited.user = session.query(User).filter_by(email=login_session['email']).first()
         itemEdited.user_id = int(login_session['id'])
         itemEdited.date = date.today()
         
@@ -254,14 +256,14 @@ def newItem():
         itemName = request.form['name']
         itemDescription = request.form['description']
         itemCategory = request.form['category']
-        print login_session
+
         # Finding the user and the category of the item from database.
-        user = session.query(User).filter_by(name=login_session['username']).first()
-        print user.name
+        user = session.query(User).filter_by(email=login_session['email']).first()
+
         category = session.query(Category).filter_by(name=itemCategory).first()
 
         #Creating the user
-        print login_session
+
         newItem = Item(name=itemName,
                        description = itemDescription,
                        user_id = user.id,
@@ -351,6 +353,8 @@ def showLogIn():
 def loginUser():
     """
     This method reads the log in form and renders appropirate page.
+
+    Redirects to the main page on success.
     """
     
     # From class. In case of the state variable in the cookie
@@ -400,6 +404,8 @@ def loginUser():
 def signUp():
     """
     This method reads the sign up form and renders appropirate page.
+
+    Redirects to the main page on success.
     """
     
     # From class. In case of the state variable in the cookie
@@ -475,13 +481,13 @@ def signUp():
 @app.route('/logout', methods = ['GET'])
 def logOut():
     """
-    When the log out button is pressed the
-    log in session is cleared and the main
-    page is rerendered.
+    Logs out the users.
+
+    Redirects to the main page.
     """
     if login_session['provider']=='facebook':
        facebook_id = login_session['id']
-       # The access token must me included to successfully logout
+       # The access token must be included to successfully logout
        access_token = login_session['access_token']
        url = 'https://graph.facebook.com/%s/permissions?access_token=%s' % (facebook_id,access_token)
        h = httplib2.Http()
@@ -546,6 +552,13 @@ def jsonCategory(categoryName):
 
 @app.route('/fblogin', methods=['POST'])
 def fbLogIn():
+    """
+    This method is called when user is logs in by Facebook.
+    
+    This method was written in class but motified a little bit.
+    
+    Redirects back to ajax call which redirects to the success function.
+    """
     if request.args.get('state') != login_session['state']:
         response = make_response(json.dumps('Invalid state parameter.'), 401)
         response.headers['Content-Type'] = 'application/json'
@@ -575,12 +588,11 @@ def fbLogIn():
     login_session['email'] = data["email"]
     #login_session['id'] = data["id"]
     
-    print login_session
-    # The token must be stored in the login_session in order to properly logout, let's strip out the information before the equals sign in our token
+    # This was written in class.
     stored_token = token.split("=")[1]
     login_session['access_token'] = stored_token
     # see if user exists
-    user = session.query(User).filter_by(name=login_session['username']).first()
+    user = session.query(User).filter_by(email=login_session['email']).first()
     
     if user is None:
        user = User(name=login_session['username'],
@@ -589,11 +601,17 @@ def fbLogIn():
        session.commit()
 
     login_session['id'] = user.id
+    # Redirection is done with the ajax success function.
+    # Directed to the success function.
     return 'ok'
 
 
 @app.route('/success')
 def success():
+    """
+    This function is called when user is logged successfully in
+    by Amazon, Google or Facebook.
+    """
     flash("Now logged in as %s" % login_session['username'],'success')
     return redirect(url_for('showCatalog'))
     
@@ -631,17 +649,19 @@ def amazonLogIn():
        response = make_response(json.dumps('Invalid state parameter.'), 401)
        response.headers['Content-Type'] = 'application/json'
        return response
-    
+
+    # Use the access token to gain the user profile
     access_token = access_token_response['access_token']
-    print access_token
     
     h = httplib2.Http()
     user_profile_response = json.loads(h.request('https://api.amazon.com/user/profile?access_token=%s' % access_token,'GET')[1])
+    
+    # If the user profile was gained log the user in. Otherwise return an error.
     if user_profile_response['name']:
        login_session['username'] = user_profile_response['name']
        login_session['email'] = user_profile_response['email']
 
-       user = session.query(User).filter_by(name = user_profile_response['name']).first()
+       user = session.query(User).filter_by(email = login_session['email']).first()
        if user is None:
           user = User(name=login_session['username'],
                       email = login_session['email'])
@@ -657,6 +677,13 @@ def amazonLogIn():
     
 @app.route('/glogin', methods=['POST'])
 def gLogIn():
+    """
+    Logs the user to the system with gmail.
+
+    Redirects to main page on success.
+
+    This method was mostly written in class but debugged and motified by Unnar Thor Bachmann.
+    """
     # Validate state token
     if request.args.get('state') != login_session['state']:
         response = make_response(json.dumps('Invalid state parameter.'), 401)
@@ -729,13 +756,14 @@ def gLogIn():
     
     login_session['picture'] = data['picture']
     login_session['email'] = data['email']
-    # ADD PROVIDER TO LOGIN SESSION
+    
+    # Add provider to the log in session.
     login_session['provider'] = 'google'
     
 
     # see if user exists, if it doesn't make a new one
-    # user
-    user = session.query(User).filter_by(name=login_session['username']).first()
+    
+    user = session.query(User).filter_by(email=login_session['email']).first()
 
     if user is None:
        user = User(name=login_session['username'],
