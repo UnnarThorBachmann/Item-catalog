@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 """
 Author: Unnar Thor Bachmann.
 
@@ -418,7 +419,7 @@ def logOut():
            return response
         
     login_session.clear()
-    flash('You have logged out','success')
+    flash('Bless!','success')
     return redirect(url_for('showCatalog'))
 
 @app.route('/item/<itemName>.json')
@@ -522,7 +523,7 @@ def success():
     This function is called when user is logged successfully in
     by Amazon, Google or Facebook.
     """
-    flash("Now logged in as %s" % login_session['username'],'success')
+    flash("Velkomin(n) %s!" % login_session['username'],'success')
     return redirect(url_for('showCatalog'))
     
 @app.route('/amazonlogin', methods=['POST'])

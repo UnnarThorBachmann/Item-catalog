@@ -4,7 +4,7 @@
   <div><span class="date">{{item.date}}</span></div>
   <h1>{{item.name}}</h1>
   <p>{{item.description}}</p>
-  <p>Contact email: {{email}}</p>
-  <p class="{{editDeleteHide}}"><a class="links" href="{{url_for('editItem',itemName=item.name)}}" role="button">Edit</a> | <a class="links" href="{{url_for('deleteItem',itemName=item.name)}}" role="button">Delete</a></p>
+  <p>Tölvupóstur: {{email}}</p>
+  <p class="{{editDeleteHide}}"><a class="links" href="{{url_for('editItem',itemName=item.name)}}" role="button">Breyta</a> | <a class="links" href="{{url_for('deleteItem',itemName=item.name)}}" role="button">Eyða</a></p>
 </div>
 {%endblock%}

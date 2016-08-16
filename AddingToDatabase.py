@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 """
 Author: Unnar Thor Bachmann.
 """
@@ -16,15 +17,19 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 # Allowed categories
-categories = ['math',
-              'english',
-              'humanities',
-              'science',
-              'sports',
-              'foreign languages',
-              'social science']
-
-# Items initally in the database.      
+fileencoding = 'utf-8'
+categories = [('stærðfræði').decode(fileencoding),
+              ('raungreinar').decode(fileencoding),
+              ('íslenska').decode(fileencoding),
+              ('enska').decode(fileencoding),
+              ('heilbrigðisgreinar').decode(fileencoding),
+              ('þriðja mál').decode(fileencoding),
+              ('iðngreinar').decode(fileencoding),
+              ('félagsgreinar').decode(fileencoding),
+              ('íþróttir').decode(fileencoding)]
+categories.sort()
+# Items initally in the database.
+"""
 items = [{'title': 'Calculus 3000',
           'description': 'I have Calculus 3000 for sale.',
           'category': 'math',
@@ -55,10 +60,10 @@ items = [{'title': 'Calculus 3000',
           'category': 'social science',
           'id': 7}
        ]
-
+"""
 # Create two dummy users with the same methods
 # as we did in the multi users blogg project.
-
+"""
 username = "Laura"
 email = "laura@fa.is"
 User1 = User(name=username,
@@ -74,7 +79,7 @@ User2 = User(name=username,
 
 session.add(User2)
 session.commit()
-
+"""
 # Adding the categories to the database.
 for category in categories:
     cat = Category(name = category)
@@ -82,6 +87,7 @@ for category in categories:
     session.commit()
 
 # Adding the items to the database.
+"""
 for item in items:
     selectedCategory = session.query(Category).filter_by(name=item['category']).one()
     randInt = random.randint(0,1)
@@ -104,3 +110,4 @@ for item in items:
                            random.randint(1,28)))
     session.add(it)
     session.commit()
+"""

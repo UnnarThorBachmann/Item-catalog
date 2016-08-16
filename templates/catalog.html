@@ -11,7 +11,7 @@
      {%endwith%}
       <div class="panel-body">
         <div class = "categories">
-          <h2>Categories</h2>
+          <h2>Flokkar</h2>
           <ul class="list-group">
             {%for item in categories%}
             <li class="list-group-item"><a class="mainAnchor" href="{{url_for('showCategory',categoryName=item.name)}}">{{item.name}}</a></li>
@@ -22,13 +22,13 @@
           
           <ul class="list-group">
             {%if filterCategoryName == 'none'%}
-              <h2>Latest items</h2>
-              <button type="button" class="{{addButtonHide}} btn btn-default navbar-btn" id='addButton'>Add item</button>
+              <h2>Nýjustu færslur</h2>
+              <button type="button" class="{{addButtonHide}} btn btn-default navbar-btn" id='addButton'>Bæta við</button>
               {%for item in items%}
                <li class="list-group-item"><a class="mainAnchor" href="{{url_for('showItem',itemName=item.name,categoryName=item.category.name)}}">{{item.name}} <span class="categories">({{item.category.name}})</span></a></li>
               {%endfor%}
             {%else%}
-              <h2>{{filterCategoryName}} items ({{n}})</h2>
+              <h2>{{filterCategoryName}} ({{n}})</h2>
               {%for item in items%}
                <li class="list-group-item"><a class="mainAnchor" href="{{url_for('showItem',itemName=item.name,categoryName=item.category.name)}}">{{item.name}}</a></li>
               {%endfor%}
