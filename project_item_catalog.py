@@ -17,6 +17,7 @@ import json
 import random
 import string
 import httplib2
+import urllib
 import requests
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
@@ -592,12 +593,68 @@ def fbLogIn():
 
 
 @app.route('/success')
-def fbsuccess():
+def success():
     flash("Now logged in as %s" % login_session['username'],'success')
     return redirect(url_for('showCatalog'))
     
+@app.route('/amazonlogin', methods=['POST'])
+def amazonLogIn():
+    """
+    This was not shown in class. This is the Authorization Code Grant method
+    which is one of two methods Amazon give up on their website to connect to them.
+    Mainly because it is more secure and relies on server site scripting.
+    """
+    # To prevent cross site request forgery.
+    if request.args.get('state') != login_session['state']:
+        response = make_response(json.dumps('Invalid state parameter.'), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    
+    # Getting client id and secret
+    jsonSecret = json.loads(open('amazon_client_secrets.json', 'r').read())
+    client_id = jsonSecret['web']['app_id']
+    client_secret = jsonSecret['web']['app_secret']
 
+    # Receiving the  code from Amazon.
+    code = request.data
 
+    # Requesting the access token from Amazon.
+    grant_type = 'authorization_code'
+    post_data = {'client_id': client_id,'client_secret': client_secret,'code':code,'grant_type':grant_type}
+    url = 'https://api.amazon.com/auth/o2/token'
+    headers = {'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'}
+    h = httplib2.Http()
+    access_token_response = json.loads(h.request(url,'POST',urllib.urlencode(post_data),headers=headers)[1])
+
+    # If no access token then return error.
+    if not access_token_response.has_key('access_token'):
+       response = make_response(json.dumps('Invalid state parameter.'), 401)
+       response.headers['Content-Type'] = 'application/json'
+       return response
+    
+    access_token = access_token_response['access_token']
+    print access_token
+    
+    h = httplib2.Http()
+    user_profile_response = json.loads(h.request('https://api.amazon.com/user/profile?access_token=%s' % access_token,'GET')[1])
+    if user_profile_response['name']:
+       login_session['username'] = user_profile_response['name']
+       login_session['email'] = user_profile_response['email']
+
+       user = session.query(User).filter_by(name = user_profile_response['name']).first()
+       if user is None:
+          user = User(name=login_session['username'],
+                      email = login_session['email'])
+          session.add(user)
+          session.commit()
+          
+       login_session['id'] = user.id
+       login_session['provider'] = 'amazon'
+       return 'Ok'
+    else: 
+        return 'error'
+
+    
 @app.route('/glogin', methods=['POST'])
 def gLogIn():
     # Validate state token

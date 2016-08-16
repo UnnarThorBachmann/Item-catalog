@@ -11,6 +11,17 @@
     </div>
   </div>
   <div class="panel panel-default" >
+    <div class="panel-heading" role="tab" id="headingAmazon">
+      <a href="#" id="LoginWithAmazon">
+        <img border="0" alt="Login with Amazon"
+          src="https://images-na.ssl-images-amazon.com/images/G/01/lwa/btnLWA_gold_156x32.png"
+          width="156" height="32" />
+      </a>
+    </div>
+    <div id="errorAmazonLogin">
+    </div>
+  </div>
+  <div class="panel panel-default" >
     <div class="panel-heading" role="tab" id="headingGoogle">
       <div id="signInButton">
         <span class="g-signin"
@@ -98,6 +109,46 @@
   </div>
 </div>
 </div>
+<div id="amazon-root"></div>
+<script type="text/javascript">
+
+  document.getElementById('LoginWithAmazon').onclick = function() {
+    options = {};
+    options.scope = 'profile';
+    options.response_type='code'; 
+    amazon.Login.authorize(options, function(response) {
+      addProgressBar();
+      $.ajax({
+        type: 'POST',
+        url: '/amazonlogin?state={{STATE}}',
+        processData: false,
+        data: response.code,
+        contentType: 'application/octet-stream; charset=utf-8',
+        success: function(result) {
+          // Handle or verify the server response if necessary.
+          if(result == 'error') {
+            $('#errorAmazonLogin').html('Amazon login failed.');
+          }
+          else {
+            window.location.href = "/success";
+          }
+        }
+      });
+    });
+  };
+</script>
+<script type="text/javascript">
+  window.onAmazonLoginReady = function() {
+    amazon.Login.setClientId('amzn1.application-oa2-client.803be539b44c42e78d3753caf888a012');
+  };
+  (function(d) {
+    var a = d.createElement('script'); a.type = 'text/javascript';
+    a.async = true; a.id = 'amazon-login-sdk';
+    a.src = 'https://api-cdn.amazon.com/sdk/login1.js';
+    d.getElementById('amazon-root').appendChild(a);
+  })(document);
+
+</script>
 <script>
   function addProgressBar() {
     var progressDiv = document.createElement('div');
